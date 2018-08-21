@@ -19,7 +19,7 @@ Evaluator is the API entry point. You can expand functionality by modifying smal
 #### Bugs, Tests etc
 
 There are alot of tests for everything here so we are pretty sure that this library is actually useable. You can use this tests (specifically smalltalkEvaluator_test.go) to better understand what you can do with this library.
-We can rewrite some parts later just to make our GO code better and somehow expand overall functionality.
+We can rewrite some parts later just to make our Go code better and somehow expand overall functionality.
 
 ## API and Examples
 
