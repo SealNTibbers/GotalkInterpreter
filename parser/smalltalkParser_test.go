@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"GotalkInterpreter/scanner"
-	"GotalkInterpreter/testutils"
-	"GotalkInterpreter/treeNodes"
+	"github.com/SealNTibbers/GotalkInterpreter/scanner"
+	"github.com/SealNTibbers/GotalkInterpreter/testutils"
+	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
 	"testing"
 )
 

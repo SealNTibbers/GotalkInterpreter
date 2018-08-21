@@ -1,7 +1,7 @@
 package treeNodes
 
 import (
-	"GotalkInterpreter/scanner"
+	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 )
 
 type ProgramNodeInterface interface {

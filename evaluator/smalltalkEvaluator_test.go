@@ -1,8 +1,8 @@
 package evaluator
 
 import (
-	"GotalkInterpreter/testutils"
-	"GotalkInterpreter/treeNodes"
+	"github.com/SealNTibbers/GotalkInterpreter/testutils"
+	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
 	"testing"
 )
 

@@ -1,8 +1,8 @@
 package scanner
 
 import (
-	"GotalkInterpreter"
-	"GotalkInterpreter/testutils"
+	"github.com/SealNTibbers/GotalkInterpreter"
+	"github.com/SealNTibbers/GotalkInterpreter/testutils"
 	"testing"
 )
 

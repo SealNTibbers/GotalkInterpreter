@@ -1,7 +1,7 @@
 package slysmalltalkinterpreter
 
 import (
-	"GotalkInterpreter/testutils"
+	"github.com/SealNTibbers/GotalkInterpreter/testutils"
 	"io"
 	"testing"
 )

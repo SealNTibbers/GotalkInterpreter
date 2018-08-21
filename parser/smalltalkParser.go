@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"GotalkInterpreter"
-	"GotalkInterpreter/scanner"
-	"GotalkInterpreter/treeNodes"
+	"github.com/SealNTibbers/GotalkInterpreter"
+	"github.com/SealNTibbers/GotalkInterpreter/scanner"
+	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
 	"strconv"
 	"strings"
 )

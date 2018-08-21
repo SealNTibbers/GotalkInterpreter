@@ -1,8 +1,8 @@
 package evaluator
 
 import (
-	"GotalkInterpreter/parser"
-	"GotalkInterpreter/treeNodes"
+	"github.com/SealNTibbers/GotalkInterpreter/parser"
+	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
 )
 
 //testing stuff

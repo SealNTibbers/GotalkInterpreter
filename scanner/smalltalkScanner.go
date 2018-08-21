@@ -1,7 +1,7 @@
 package scanner
 
 import (
-	"GotalkInterpreter"
+	"github.com/SealNTibbers/GotalkInterpreter"
 	"math"
 	"strconv"
 	"strings"
