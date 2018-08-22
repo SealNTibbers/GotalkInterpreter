@@ -24,8 +24,9 @@ We can rewrite some parts later just to make our Go code better and somehow expa
 ## Installation
 
 GotalkInterpreter does not use any third party libraries. For getting it to run on your machine, you just run standard go get:
-
+```go
 go get github.com/SealNTibbers/GotalkInterpreter
+```
 
 ## API and Examples
 
