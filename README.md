@@ -21,6 +21,12 @@ Evaluator is the API entry point. You can expand functionality by modifying smal
 There are a lot of tests for everything here so we are pretty sure that this library is actually useable. You can use this tests (specifically smalltalkEvaluator_test.go) to better understand what you can do with this library.
 We can rewrite some parts later just to make our Go code better and somehow expand overall functionality.
 
+## Installation
+
+GotalkInterpreter does not use any third party libraries. For getting it to run on your machine, you just run standard go get:
+
+go get github.com/SealNTibbers/GotalkInterpreter
+
 ## API and Examples
 
 result of our Smalltalk code evaluation can be either float64 or string
