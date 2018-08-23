@@ -30,8 +30,9 @@ go get github.com/SealNTibbers/GotalkInterpreter
 
 ## API and Examples
 
-result of our Smalltalk code evaluation can be either float64 or string
+result of our Smalltalk code evaluation can be number (float64 or int. Internally it's always float64), bool or string
 
+#### Low-lewel API example
 ```
 //so we have smalltalk code string and want to evaluate it `angle\\10/10-0.9*10`
 
@@ -43,4 +44,34 @@ resultObject = evaluator.RunProgram(`angle\\10/10-0.9*10`)
 
 result = resultObject.(*treeNodes.SmalltalkNumber).GetValue()
 //so now we have result which is float64 and equals to -4
+```
+
+#### Higher level API example. See TestAPI func in smalltalkEvaluator_test.go
+```
+	chant := "I am the bone of my sword.."
+	globalScope := new(treeNodes.Scope).Initialize()
+	globalScope.SetNumberVar("swordsAmount", 9001)
+	globalScope.SetBoolVar("lie",false)
+	globalScope.SetStringVar("chant",chant)
+	evaluator := NewEvaluatorWithGlobalScope(globalScope)
+	smalltalkProgramm1 := `(swordsAmount > 9000) ifTrue:[chant] ifFalse:['ouch it hurts']`
+	smalltalkProgramm2 := `(swordsAmount > 1.2e4) ifTrue:[-1] ifFalse:[42]`
+	smalltalkProgramm3 := `lie ifTrue:[0.001] ifFalse:[-0.56]`
+	smalltalkProgramm4 := `swordsAmount > 1.2e4`
+	var result1 string
+	var result2 int64
+	var result3 float64
+	var result4 bool
+
+	result1 = evaluator.EvaluateToString(smalltalkProgramm1)
+	testutils.ASSERT_STREQ(t, result1, chant)
+
+	result2 = evaluator.EvaluateToInt64(smalltalkProgramm2)
+	testutils.ASSERT_EQ(t, int(result2), 42)
+
+	result3 = evaluator.EvaluateToFloat64(smalltalkProgramm3)
+	testutils.ASSERT_FLOAT64_EQ(t, result3, -0.56)
+
+	result4 = evaluator.EvaluateToBool(smalltalkProgramm4)
+	testutils.ASSERT_FALSE(t, result4)
 ```
