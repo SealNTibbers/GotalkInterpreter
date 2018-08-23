@@ -48,30 +48,30 @@ result = resultObject.(*treeNodes.SmalltalkNumber).GetValue()
 
 #### Higher level API example. See TestAPI func in smalltalkEvaluator_test.go
 ```
-	chant := "I am the bone of my sword.."
-	globalScope := new(treeNodes.Scope).Initialize()
-	globalScope.SetNumberVar("swordsAmount", 9001)
-	globalScope.SetBoolVar("lie",false)
-	globalScope.SetStringVar("chant",chant)
-	evaluator := NewEvaluatorWithGlobalScope(globalScope)
-	smalltalkProgramm1 := `(swordsAmount > 9000) ifTrue:[chant] ifFalse:['ouch it hurts']`
-	smalltalkProgramm2 := `(swordsAmount > 1.2e4) ifTrue:[-1] ifFalse:[42]`
-	smalltalkProgramm3 := `lie ifTrue:[0.001] ifFalse:[-0.56]`
-	smalltalkProgramm4 := `swordsAmount > 1.2e4`
-	var result1 string
-	var result2 int64
-	var result3 float64
-	var result4 bool
+chant := "I am the bone of my sword.."
+globalScope := new(treeNodes.Scope).Initialize()
+globalScope.SetNumberVar("swordsAmount", 9001)
+globalScope.SetBoolVar("lie",false)
+globalScope.SetStringVar("chant",chant)
+evaluator := NewEvaluatorWithGlobalScope(globalScope)
+smalltalkProgramm1 := `(swordsAmount > 9000) ifTrue:[chant] ifFalse:['ouch it hurts']`
+smalltalkProgramm2 := `(swordsAmount > 1.2e4) ifTrue:[-1] ifFalse:[42]`
+smalltalkProgramm3 := `lie ifTrue:[0.001] ifFalse:[-0.56]`
+smalltalkProgramm4 := `swordsAmount > 1.2e4`
+var result1 string
+var result2 int64
+var result3 float64
+var result4 bool
 
-	result1 = evaluator.EvaluateToString(smalltalkProgramm1)
-	testutils.ASSERT_STREQ(t, result1, chant)
+result1 = evaluator.EvaluateToString(smalltalkProgramm1)
+testutils.ASSERT_STREQ(t, result1, chant)
 
-	result2 = evaluator.EvaluateToInt64(smalltalkProgramm2)
-	testutils.ASSERT_EQ(t, int(result2), 42)
+result2 = evaluator.EvaluateToInt64(smalltalkProgramm2)
+testutils.ASSERT_EQ(t, int(result2), 42)
 
-	result3 = evaluator.EvaluateToFloat64(smalltalkProgramm3)
-	testutils.ASSERT_FLOAT64_EQ(t, result3, -0.56)
+result3 = evaluator.EvaluateToFloat64(smalltalkProgramm3)
+testutils.ASSERT_FLOAT64_EQ(t, result3, -0.56)
 
-	result4 = evaluator.EvaluateToBool(smalltalkProgramm4)
-	testutils.ASSERT_FALSE(t, result4)
+result4 = evaluator.EvaluateToBool(smalltalkProgramm4)
+testutils.ASSERT_FALSE(t, result4)
 ```
