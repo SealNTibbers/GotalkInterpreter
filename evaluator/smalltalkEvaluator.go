@@ -56,3 +56,22 @@ func (e *Evaluator) EvaluateProgramNode(programNode treeNodes.ProgramNodeInterfa
 	localScope.OuterScope = e.globalScope
 	return programNode.Eval(localScope)
 }
+
+func (e *Evaluator) EvaluateToString(programString string) string {
+	resultObject := e.RunProgram(programString)
+	return resultObject.(*treeNodes.SmalltalkString).GetValue()
+}
+
+func (e *Evaluator) EvaluateToFloat64(programString string) float64 {
+	resultObject := e.RunProgram(programString)
+	return resultObject.(*treeNodes.SmalltalkNumber).GetValue()
+}
+
+func (e *Evaluator) EvaluateToInt64(programString string) int64 {
+	return int64(e.EvaluateToFloat64(programString))
+}
+
+func (e *Evaluator) EvaluateToBool(programString string) bool {
+	resultObject := e.RunProgram(programString)
+	return resultObject.(*treeNodes.SmalltalkBoolean).GetValue()
+}

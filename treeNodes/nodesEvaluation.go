@@ -21,6 +21,24 @@ func (s *Scope) SetVar(name string, value SmalltalkObjectInterface) SmalltalkObj
 	return value
 }
 
+func (s *Scope) SetStringVar(name string, value string) SmalltalkObjectInterface {
+	smValue := NewSmalltalkString(value)
+	s.variables[name] = smValue
+	return smValue
+}
+
+func (s *Scope) SetNumberVar(name string, value float64) SmalltalkObjectInterface {
+	smValue := NewSmalltalkNumber(value)
+	s.variables[name] = smValue
+	return smValue
+}
+
+func (s *Scope) SetBoolVar(name string, value bool) SmalltalkObjectInterface {
+	smValue := NewSmalltalkBoolean(value)
+	s.variables[name] = smValue
+	return smValue
+}
+
 func (s *Scope) FindValueByName(name string) (SmalltalkObjectInterface, bool) {
 	value, ok := s.variables[name]
 	return value, ok
