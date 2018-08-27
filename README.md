@@ -5,7 +5,7 @@ It's a simplistic Smalltalk code interpreter library written in Golang by Alex a
 
 #### Who can use it
 
-The entire purpose of this library is to use smalltalk as scripting language in any Golang application since Golang is static by its nature. 
+The entire purpose of this library is to use Smalltalk for simple scripting purposes in Golang applications.
 
 #### Why Smalltalk
 
@@ -35,7 +35,7 @@ Result of our Smalltalk code evaluation can be number (float64 or int. Internall
 In our little Smalltalk we have supported limited amount of messages that is enough for our internal project but it's easily expandable.
 
 Numbers can receive following messages:
-```
+```go
 `value`           
 `=`               
 `~=`            
@@ -71,7 +71,7 @@ Numbers can receive following messages:
 ```
 
 Booleans can receive following messages:
-```
+```go
 `value`
 `=`
 `~=`
@@ -88,13 +88,13 @@ Booleans can receive following messages:
 ```
 
 Blocks can receive following messages:
-```
+```go
 `value`
 `value:`
 ```
 
 Arrays can receive following messages:
-```
+```go
 `at:`
 `+`
 `-`
@@ -105,7 +105,7 @@ Arrays can receive following messages:
 ```
 
 #### Low-lewel API example
-```
+```go
 //so we have smalltalk code string and want to evaluate it `angle\\10/10-0.9*10`
 
 globalScope := new(treeNodes.Scope).Initialize()
@@ -119,7 +119,7 @@ result = resultObject.(*treeNodes.SmalltalkNumber).GetValue()
 ```
 
 #### Higher level API example. See TestAPI func in smalltalkEvaluator_test.go
-```
+```go
 vm := NewSmalltalkVM()
 vm.SetNumberVar("swordsAmount", 9001)
 vm.SetBoolVar("lie",false)
