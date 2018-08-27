@@ -30,7 +30,79 @@ go get github.com/SealNTibbers/GotalkInterpreter
 
 ## API and Examples
 
-result of our Smalltalk code evaluation can be number (float64 or int. Internally it's always float64), bool or string
+Result of our Smalltalk code evaluation can be number (float64 or int. Internally it's always float64), bool or string.
+
+In our little Smalltalk we have supported limited amount of messages that is enough for our internal project but it's easily expandable.
+
+Numbers can receive following messages:
+```
+`value`           
+`=`               
+`~=`            
+`>`             
+`>=`             
+`<`              
+`<=`             
+`+`             
+`-`               
+`*`             
+`/`             
+`\\`             
+`//`             
+`rem:`           
+`max:`            
+`min:`            
+`abs`           
+`sqrt`            
+`sqr`             
+`sin`             
+`cos`             
+`tan`             
+`arcSin`          
+`arcCos`         
+`arcTan`          
+`rounded`         
+`truncated`       
+`fractionPart`     
+`floor`           
+`ceiling`          
+`negated`       
+`degreesToRadians`
+```
+
+Booleans can receive following messages:
+```
+`value`
+`=`
+`~=`
+`ifTrue:`
+`ifFalse:`
+`ifTrue:ifFalse:`
+`ifFalse:ifTrue:`
+`and:`
+`&`
+`or:`
+`|`
+`xor:`
+`not`
+```
+
+Blocks can receive following messages:
+```
+`value`
+`value:`
+```
+
+Arrays can receive following messages:
+```
+`at:`
+`+`
+`-`
+`*`
+`/`
+`\\`
+`//`
+```
 
 #### Low-lewel API example
 ```
