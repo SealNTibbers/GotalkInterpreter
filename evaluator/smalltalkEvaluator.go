@@ -25,6 +25,11 @@ func TestEvalWithScope(codeString string, scope *treeNodes.Scope) treeNodes.Smal
 }
 
 //real world API
+func NewSmalltalkVM() *Evaluator {
+	globalScope := new(treeNodes.Scope).Initialize()
+	return NewEvaluatorWithGlobalScope(globalScope)
+}
+
 func NewEvaluatorWithGlobalScope(global *treeNodes.Scope) *Evaluator {
 	evaluator := new(Evaluator)
 	evaluator.programCache = make(map[string]treeNodes.ProgramNodeInterface)
@@ -40,6 +45,10 @@ type Evaluator struct {
 func (e *Evaluator) SetGlobalScope(scope *treeNodes.Scope) *Evaluator {
 	e.globalScope = scope
 	return e
+}
+
+func (e *Evaluator) GetGlobalScope() *treeNodes.Scope {
+	return e.globalScope
 }
 
 func (e *Evaluator) RunProgram(programString string) treeNodes.SmalltalkObjectInterface {
@@ -74,4 +83,25 @@ func (e *Evaluator) EvaluateToInt64(programString string) int64 {
 func (e *Evaluator) EvaluateToBool(programString string) bool {
 	resultObject := e.RunProgram(programString)
 	return resultObject.(*treeNodes.SmalltalkBoolean).GetValue()
+}
+
+//scope-related delegations
+func (e *Evaluator) SetVar(name string, value treeNodes.SmalltalkObjectInterface) treeNodes.SmalltalkObjectInterface {
+	return e.GetGlobalScope().SetVar(name, value)
+}
+
+func (e *Evaluator) SetStringVar(name string, value string) treeNodes.SmalltalkObjectInterface {
+	return e.GetGlobalScope().SetStringVar(name, value)
+}
+
+func (e *Evaluator) SetNumberVar(name string, value float64) treeNodes.SmalltalkObjectInterface {
+	return e.GetGlobalScope().SetNumberVar(name, value)
+}
+
+func (e *Evaluator) SetBoolVar(name string, value bool) treeNodes.SmalltalkObjectInterface {
+	return e.GetGlobalScope().SetBoolVar(name, value)
+}
+
+func (e *Evaluator) FindValueByName(name string) (treeNodes.SmalltalkObjectInterface, bool) {
+	return e.GetGlobalScope().FindValueByName(name)
 }
