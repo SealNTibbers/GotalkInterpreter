@@ -9,7 +9,7 @@ The entire purpose of this library is to use Smalltalk for simple scripting purp
 
 #### Why Smalltalk
 
-Smalltalk is beautiful dynamic language with readable syntax. Also we are smalltalkers with up to 10 years coding experience.
+Smalltalk is beautiful dynamic language with readable syntax. Also we are smalltalkers so that's why.
 
 #### Contents
 
