@@ -5,7 +5,7 @@ It's a simplistic Smalltalk code interpreter library written in Golang by Alex a
 
 #### Who can use it
 
-The entire purpose of this library is to use Smalltalk for simple scripting purposes in Golang applications.
+The entire purpose of this library is to use Smalltalk for simple scripting purposes in Golang applications. It is optimized to reevaluate same code lines with different scope (variables).
 
 #### Why Smalltalk
 
