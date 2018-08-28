@@ -5,11 +5,12 @@ It's a simplistic Smalltalk code interpreter library written in Golang by Alex a
 
 #### Who can use it
 
-The entire purpose of this library is to use Smalltalk for simple scripting purposes in Golang applications. It is optimized to reevaluate same code lines with different scope (variables).
+The entire purpose of this library is to use Smalltalk for dynamic code (string) evaluation in Golang applications. It is optimized to reevaluate same code lines with different scope (variables).
+Typical usecase: our app reading xml file with a markup and a Smalltalk code, evaluating this code and using result to show output. We using it to build and animate OpenGL UI for our embedded software.
 
 #### Why Smalltalk
 
-Smalltalk is beautiful dynamic language with readable syntax. Also we are smalltalkers so that's why.
+Smalltalk is beautiful dynamic language with a concise and readable syntax. Also we are smalltalkers so that's why.
 
 #### Contents
 
@@ -18,12 +19,12 @@ Evaluator is the API entry point. You can expand functionality by modifying smal
 
 #### Bugs, Tests etc
 
-There are a lot of tests for everything here so we are pretty sure that this library is actually useable. You can use this tests (specifically smalltalkEvaluator_test.go) to better understand what you can do with this library.
+There are a lot of tests for everything here so we are pretty sure that this library is actually useable. You can use its tests (specifically smalltalkEvaluator_test.go) to better understand what you can do with this library.
 We can rewrite some parts later just to make our Go code better and somehow expand overall functionality.
 
 ## Installation
 
-GotalkInterpreter does not use any third party libraries. For getting it to run on your machine, you just run standard go get:
+GotalkInterpreter does not use any third party libraries. For getting it run on your machine, you just:
 ```go
 go get github.com/SealNTibbers/GotalkInterpreter
 ```
