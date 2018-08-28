@@ -148,3 +148,19 @@ testutils.ASSERT_FLOAT64_EQ(t, result3, -0.56)
 result4 = vm.EvaluateToBool(smalltalkProgram4)
 testutils.ASSERT_FALSE(t, result4)
 ```
+##### Nested variable scopes
+```go
+var inputString1, inputString2 string
+var result1, result2 int64
+
+vm := NewSmalltalkVM()
+vm.SetNumberVar("x", 11)
+
+inputString1 = `|x| x := 25. x+75`
+result1 = vm.EvaluateToInt64(inputString1)
+testutils.ASSERT_EQ(t, int(result1), 100)
+
+inputString2 = `x+75`
+result2 = vm.EvaluateToInt64(inputString2)
+testutils.ASSERT_EQ(t, int(result2), 86)
+```
