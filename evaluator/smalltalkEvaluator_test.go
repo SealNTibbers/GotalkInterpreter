@@ -460,9 +460,9 @@ func TestBooleanEvaluation(t *testing.T) {
 func TestAPI(t *testing.T) {
 	vm := NewSmalltalkVM()
 	vm.SetNumberVar("swordsAmount", 9001)
-	vm.SetBoolVar("lie",false)
+	vm.SetBoolVar("lie", false)
 	chant := "I am the bone of my sword.."
-	vm.SetStringVar("chant",chant)
+	vm.SetStringVar("chant", chant)
 
 	smalltalkProgram1 := `(swordsAmount > 9000) ifTrue:[chant] ifFalse:['ouch it hurts']`
 	smalltalkProgram2 := `(swordsAmount > 1.2e4) ifTrue:[-1] ifFalse:[42]`

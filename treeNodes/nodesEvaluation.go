@@ -9,7 +9,7 @@ import (
 type Scope struct {
 	variables  map[string]SmalltalkObjectInterface
 	OuterScope *Scope
-	isDirty bool
+	isDirty    bool
 }
 
 func (s *Scope) IsDirty() bool {

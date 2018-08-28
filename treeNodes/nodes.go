@@ -19,7 +19,7 @@ type ProgramNodeInterface interface {
 }
 
 type Node struct {
-	parent ProgramNodeInterface
+	parent    ProgramNodeInterface
 	lastValue SmalltalkObjectInterface
 }
 
