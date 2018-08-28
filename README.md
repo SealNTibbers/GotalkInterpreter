@@ -1,6 +1,6 @@
 # GotalkInterpreter
 
-It's a simplistic Smalltalk code interpreter library written in Golang by Alex and Michael.
+It's a simplistic Smalltalk code interpreter written in Golang by Alex and Michael.
 
 
 #### Who can use it
