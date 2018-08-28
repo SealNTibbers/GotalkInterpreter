@@ -14,10 +14,21 @@ type ProgramNodeInterface interface {
 	IsLiteralArray() bool
 	IsAssignment() bool
 	Eval(scope *Scope) SmalltalkObjectInterface
+	GetLastValue() SmalltalkObjectInterface
+	SetLastValue(SmalltalkObjectInterface)
 }
 
 type Node struct {
 	parent ProgramNodeInterface
+	lastValue SmalltalkObjectInterface
+}
+
+func (n *Node) SetLastValue(value SmalltalkObjectInterface) {
+	n.lastValue = value
+}
+
+func (n *Node) GetLastValue() SmalltalkObjectInterface {
+	return n.lastValue
 }
 
 func (n *Node) Eval(scope *Scope) SmalltalkObjectInterface {

@@ -9,6 +9,15 @@ import (
 type Scope struct {
 	variables  map[string]SmalltalkObjectInterface
 	OuterScope *Scope
+	isDirty bool
+}
+
+func (s *Scope) IsDirty() bool {
+	return s.isDirty
+}
+
+func (s *Scope) Clean() {
+	s.isDirty = false
 }
 
 func (s *Scope) Initialize() *Scope {
@@ -17,26 +26,24 @@ func (s *Scope) Initialize() *Scope {
 }
 
 func (s *Scope) SetVar(name string, value SmalltalkObjectInterface) SmalltalkObjectInterface {
+	s.isDirty = true
 	s.variables[name] = value
 	return value
 }
 
-func (s *Scope) SetStringVar(name string, value string) SmalltalkObjectInterface {
+func (s *Scope) SetStringVar(name string, value string) *SmalltalkString {
 	smValue := NewSmalltalkString(value)
-	s.variables[name] = smValue
-	return smValue
+	return s.SetVar(name, smValue).(*SmalltalkString)
 }
 
-func (s *Scope) SetNumberVar(name string, value float64) SmalltalkObjectInterface {
+func (s *Scope) SetNumberVar(name string, value float64) *SmalltalkNumber {
 	smValue := NewSmalltalkNumber(value)
-	s.variables[name] = smValue
-	return smValue
+	return s.SetVar(name, smValue).(*SmalltalkNumber)
 }
 
-func (s *Scope) SetBoolVar(name string, value bool) SmalltalkObjectInterface {
+func (s *Scope) SetBoolVar(name string, value bool) *SmalltalkBoolean {
 	smValue := NewSmalltalkBoolean(value)
-	s.variables[name] = smValue
-	return smValue
+	return s.SetVar(name, smValue).(*SmalltalkBoolean)
 }
 
 func (s *Scope) FindValueByName(name string) (SmalltalkObjectInterface, bool) {

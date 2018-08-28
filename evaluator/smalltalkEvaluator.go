@@ -61,9 +61,19 @@ func (e *Evaluator) RunProgram(programString string) treeNodes.SmalltalkObjectIn
 }
 
 func (e *Evaluator) EvaluateProgramNode(programNode treeNodes.ProgramNodeInterface) treeNodes.SmalltalkObjectInterface {
-	localScope := new(treeNodes.Scope).Initialize()
-	localScope.OuterScope = e.globalScope
-	return programNode.Eval(localScope)
+	var result treeNodes.SmalltalkObjectInterface
+	//localScope := new(treeNodes.Scope).Initialize()
+	//localScope.OuterScope = e.globalScope
+
+	if e.globalScope.IsDirty() || programNode.GetLastValue() == nil {
+		result = programNode.Eval(e.globalScope)
+		programNode.SetLastValue(result)
+		e.globalScope.Clean()
+	} else {
+		result = programNode.GetLastValue()
+	}
+
+	return result
 }
 
 func (e *Evaluator) EvaluateToString(programString string) string {
@@ -87,21 +97,21 @@ func (e *Evaluator) EvaluateToBool(programString string) bool {
 
 //scope-related delegations
 func (e *Evaluator) SetVar(name string, value treeNodes.SmalltalkObjectInterface) treeNodes.SmalltalkObjectInterface {
-	return e.GetGlobalScope().SetVar(name, value)
+	return e.globalScope.SetVar(name, value)
 }
 
 func (e *Evaluator) SetStringVar(name string, value string) treeNodes.SmalltalkObjectInterface {
-	return e.GetGlobalScope().SetStringVar(name, value)
+	return e.globalScope.SetStringVar(name, value)
 }
 
 func (e *Evaluator) SetNumberVar(name string, value float64) treeNodes.SmalltalkObjectInterface {
-	return e.GetGlobalScope().SetNumberVar(name, value)
+	return e.globalScope.SetNumberVar(name, value)
 }
 
 func (e *Evaluator) SetBoolVar(name string, value bool) treeNodes.SmalltalkObjectInterface {
-	return e.GetGlobalScope().SetBoolVar(name, value)
+	return e.globalScope.SetBoolVar(name, value)
 }
 
 func (e *Evaluator) FindValueByName(name string) (treeNodes.SmalltalkObjectInterface, bool) {
-	return e.GetGlobalScope().FindValueByName(name)
+	return e.globalScope.FindValueByName(name)
 }
