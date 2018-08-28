@@ -71,6 +71,25 @@ func TestGlobalScopeEvaluation(t *testing.T) {
 	testutils.ASSERT_FLOAT64_EQ(t, resultObject.(*treeNodes.SmalltalkNumber).GetValue(), 25)
 }
 
+func TestLocalScopeEvaluation(t *testing.T) {
+	var inputString string
+	var resultObject treeNodes.SmalltalkObjectInterface
+
+	globalScope := new(treeNodes.Scope).Initialize()
+	globalScope.SetVar("x", treeNodes.NewSmalltalkNumber(11))
+
+
+	inputString = `|x| x := 25. x+75`
+	resultObject = TestEvalWithScope(inputString, globalScope)
+	testutils.ASSERT_TRUE(t, resultObject.TypeOf() == treeNodes.NUMBER_OBJ)
+	testutils.ASSERT_FLOAT64_EQ(t, resultObject.(*treeNodes.SmalltalkNumber).GetValue(), 100)
+
+	inputString = `x+75`
+	resultObject = TestEvalWithScope(inputString, globalScope)
+	testutils.ASSERT_TRUE(t, resultObject.TypeOf() == treeNodes.NUMBER_OBJ)
+	testutils.ASSERT_FLOAT64_EQ(t, resultObject.(*treeNodes.SmalltalkNumber).GetValue(), 86)
+}
+
 func TestRealWorldEvaluation(t *testing.T) {
 	var inputString string
 	var resultObject treeNodes.SmalltalkObjectInterface

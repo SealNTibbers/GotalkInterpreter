@@ -62,11 +62,11 @@ func (e *Evaluator) RunProgram(programString string) treeNodes.SmalltalkObjectIn
 
 func (e *Evaluator) EvaluateProgramNode(programNode treeNodes.ProgramNodeInterface) treeNodes.SmalltalkObjectInterface {
 	var result treeNodes.SmalltalkObjectInterface
-	//localScope := new(treeNodes.Scope).Initialize()
-	//localScope.OuterScope = e.globalScope
+	localScope := new(treeNodes.Scope).Initialize()
+	localScope.OuterScope = e.globalScope
 
 	if e.globalScope.IsDirty() || programNode.GetLastValue() == nil {
-		result = programNode.Eval(e.globalScope)
+		result = programNode.Eval(localScope)
 		programNode.SetLastValue(result)
 		e.globalScope.Clean()
 	} else {
