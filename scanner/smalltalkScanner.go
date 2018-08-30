@@ -1,7 +1,7 @@
 package scanner
 
 import (
-	"github.com/SealNTibbers/GotalkInterpreter"
+	"github.com/SealNTibbers/GotalkInterpreter/io"
 	"math"
 	"strconv"
 	"strings"
@@ -26,7 +26,7 @@ const (
 	KEYWORD = "keyword"
 )
 
-func New(input slysmalltalkinterpreter.StringReader) *Scanner {
+func New(input io.StringReader) *Scanner {
 
 	scanner := &Scanner{}
 
@@ -43,8 +43,8 @@ func New(input slysmalltalkinterpreter.StringReader) *Scanner {
 }
 
 type Scanner struct {
-	buffer              *slysmalltalkinterpreter.StringWriter
-	stream              *slysmalltalkinterpreter.StringReader
+	buffer              *io.StringWriter
+	stream              *io.StringReader
 	classificationTable []string
 	characterType       string
 	currentCharacter    rune
@@ -52,7 +52,7 @@ type Scanner struct {
 	token               TokenInterface
 }
 
-func (s *Scanner) on(input slysmalltalkinterpreter.StringReader) {
+func (s *Scanner) on(input io.StringReader) {
 	s.buffer.Grow(60)
 	s.stream = &input
 
@@ -89,7 +89,7 @@ func (s *Scanner) getClassificationTable() []string {
 }
 
 func (s *Scanner) initializeBuffer() {
-	s.buffer = &slysmalltalkinterpreter.StringWriter{}
+	s.buffer = &io.StringWriter{}
 }
 
 func (s *Scanner) initializeClassificationTable() []string {

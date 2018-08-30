@@ -1,4 +1,4 @@
-package slysmalltalkinterpreter
+package io
 
 import (
 	"github.com/SealNTibbers/GotalkInterpreter/testutils"
