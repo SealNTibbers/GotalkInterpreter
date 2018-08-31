@@ -391,12 +391,12 @@ func Call(receiver SmalltalkObjectInterface, m map[string]interface{}, name stri
 	}
 	f, ok := m[name]
 	if !ok {
-		err := errors.New("Does not understand: " + name)
+		err := errors.New("does not understand: " + name)
 		return nil, err
 	}
 	function := reflect.ValueOf(f)
 	if len(receiverAndArgs) != function.Type().NumIn() {
-		err := errors.New("The number of params is not adapted.")
+		err := errors.New("wrong parameters length")
 		return nil, err
 	}
 	in := make([]reflect.Value, len(receiverAndArgs))
@@ -416,7 +416,7 @@ type SmalltalkObjectInterface interface {
 type SmalltalkObject struct {
 }
 
-func (o *SmalltalkObject) Perform(name string, params []SmalltalkObjectInterface) (SmalltalkObjectInterface, error) {
+func (obj *SmalltalkObject) Perform(name string, params []SmalltalkObjectInterface) (SmalltalkObjectInterface, error) {
 	return nil, nil
 }
 

@@ -1,7 +1,7 @@
 package scanner
 
 import (
-	"github.com/SealNTibbers/GotalkInterpreter/io"
+	"github.com/SealNTibbers/GotalkInterpreter/talkio"
 	"math"
 	"strconv"
 	"strings"
@@ -26,7 +26,7 @@ const (
 	KEYWORD = "keyword"
 )
 
-func New(input io.StringReader) *Scanner {
+func New(input talkio.StringReader) *Scanner {
 
 	scanner := &Scanner{}
 
@@ -43,8 +43,8 @@ func New(input io.StringReader) *Scanner {
 }
 
 type Scanner struct {
-	buffer              *io.StringWriter
-	stream              *io.StringReader
+	buffer              *talkio.StringWriter
+	stream              *talkio.StringReader
 	classificationTable []string
 	characterType       string
 	currentCharacter    rune
@@ -52,7 +52,7 @@ type Scanner struct {
 	token               TokenInterface
 }
 
-func (s *Scanner) on(input io.StringReader) {
+func (s *Scanner) on(input talkio.StringReader) {
 	s.buffer.Grow(60)
 	s.stream = &input
 
@@ -89,7 +89,7 @@ func (s *Scanner) getClassificationTable() []string {
 }
 
 func (s *Scanner) initializeBuffer() {
-	s.buffer = &io.StringWriter{}
+	s.buffer = &talkio.StringWriter{}
 }
 
 func (s *Scanner) initializeClassificationTable() []string {

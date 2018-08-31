@@ -1,14 +1,14 @@
 package scanner
 
 import (
-	"github.com/SealNTibbers/GotalkInterpreter/io"
+	"github.com/SealNTibbers/GotalkInterpreter/talkio"
 	"github.com/SealNTibbers/GotalkInterpreter/testutils"
 	"testing"
 )
 
 func TestScanNumber(t *testing.T) {
 	inputString := `0.56`
-	vwReader := io.NewReader(inputString)
+	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	token = vwScanner.Next()
@@ -21,7 +21,7 @@ func TestScanNumber(t *testing.T) {
 
 func TestScanIdentifier(t *testing.T) {
 	inputString := `radio_altitude`
-	vwReader := io.NewReader(inputString)
+	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	token = vwScanner.Next()
@@ -34,7 +34,7 @@ func TestScanIdentifier(t *testing.T) {
 
 func TestScanFloatNumberWithD(t *testing.T) {
 	inputString := `1.02d`
-	vwReader := io.NewReader(inputString)
+	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	token = vwScanner.Next()
@@ -47,7 +47,7 @@ func TestScanFloatNumberWithD(t *testing.T) {
 
 func TestScanFloatNumberWithExp(t *testing.T) {
 	inputString := `1e4`
-	vwReader := io.NewReader(inputString)
+	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	token = vwScanner.Next()
@@ -60,7 +60,7 @@ func TestScanFloatNumberWithExp(t *testing.T) {
 
 func TestScanFloatNumberWithNegativeExp(t *testing.T) {
 	inputString := `1e-4`
-	vwReader := io.NewReader(inputString)
+	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	token = vwScanner.Next()
@@ -87,7 +87,7 @@ func TestScanRealExpressions(t *testing.T) {
 		{BIN, "*"},
 		{NUMBER, "10"},
 	}
-	vwReader := io.NewReader(inputString)
+	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	for _, eachTest := range tests {
@@ -122,7 +122,7 @@ func TestScanIfStatementExpressionWithDifferentSubexpressions(t *testing.T) {
 		{BOOLEAN, "true"},
 		{SPEC, "]"},
 	}
-	vwReader := io.NewReader(inputString)
+	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	for _, eachTest := range tests {
@@ -144,7 +144,7 @@ func TestScanAssignmentExpression(t *testing.T) {
 		{IDENT, "a"},
 		{NUMBER, "1"},
 	}
-	vwReader := io.NewReader(inputString)
+	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	foundAssignment := false
@@ -181,7 +181,7 @@ func TestScanArray(t *testing.T) {
 		{NUMBER, "1"},
 		{SPEC, ")"},
 	}
-	vwReader := io.NewReader(inputString)
+	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	for _, eachTest := range tests {

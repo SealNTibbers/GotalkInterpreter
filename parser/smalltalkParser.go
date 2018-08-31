@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/SealNTibbers/GotalkInterpreter/io"
+	"github.com/SealNTibbers/GotalkInterpreter/talkio"
 	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
 	"strconv"
@@ -16,7 +16,7 @@ type Parser struct {
 }
 
 func InitializeParserFor(expressionString string) treeNodes.ProgramNodeInterface {
-	reader := io.NewReader(expressionString)
+	reader := talkio.NewReader(expressionString)
 	scanner := scanner.New(*reader)
 	parser := &Parser{scanner, nil, nil, false}
 

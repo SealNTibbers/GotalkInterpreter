@@ -1,4 +1,4 @@
-package io
+package talkio
 
 import (
 	"errors"
