@@ -5,7 +5,7 @@ It's a simplistic Smalltalk code interpreter written in Golang by Alex and Micha
 
 #### Who can use it
 
-The entire purpose of this library is to use Smalltalk for dynamic code (string) evaluation in Golang applications. It is optimized to reevaluate same code lines with different scope (variables). Typical use case: our app read xml file with a markup and a Smalltalk code, evaluate this code and use the result. We use it to build and animate an OpenGL UI for our embedded software.
+The entire purpose of this library is to use Smalltalk for dynamic code (string) evaluation in Golang applications. It is optimized to reevaluate same code lines with different scope (variables). Typical use case: our app reads xml file with a markup and a Smalltalk code, evaluates this code and uses the result. We use it to build and animate an OpenGL UI for our embedded software.
 
 #### Why Smalltalk
 
