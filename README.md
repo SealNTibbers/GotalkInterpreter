@@ -23,7 +23,7 @@ We can rewrite some parts later just to make our Go code better and somehow expa
 
 ## Installation
 
-GotalkInterpreter does not use any third party libraries. For getting it run on your machine, you just:
+GotalkInterpreter does not use any third party libraries. To get it run on your machine, you just:
 ```go
 go get github.com/SealNTibbers/GotalkInterpreter
 ```
