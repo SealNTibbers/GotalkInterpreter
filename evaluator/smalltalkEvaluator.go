@@ -95,6 +95,22 @@ func (e *Evaluator) EvaluateToBool(programString string) bool {
 	return resultObject.(*treeNodes.SmalltalkBoolean).GetValue()
 }
 
+func (e *Evaluator) EvaluateToInterface(programString string) interface{} {
+	resultObject := e.RunProgram(programString)
+	switch resultObject.TypeOf() {
+	case treeNodes.NUMBER_OBJ:
+		return resultObject.(*treeNodes.SmalltalkNumber).GetValue()
+	case treeNodes.STRING_OBJ:
+		return resultObject.(*treeNodes.SmalltalkString).GetValue()
+	case treeNodes.BOOLEAN_OBJ:
+		return resultObject.(*treeNodes.SmalltalkBoolean).GetValue()
+	case treeNodes.ARRAY_OBJ:
+		return resultObject.(*treeNodes.SmalltalkArray).GetValue()
+	default:
+		return nil
+	}
+}
+
 //scope-related delegations
 func (e *Evaluator) SetVar(name string, value treeNodes.SmalltalkObjectInterface) treeNodes.SmalltalkObjectInterface {
 	return e.globalScope.SetVar(name, value)

@@ -476,13 +476,18 @@ func TestAPI(t *testing.T) {
 
 	result1 = vm.EvaluateToString(smalltalkProgram1)
 	testutils.ASSERT_STREQ(t, result1, chant)
+	testutils.ASSERT_STREQ(t, vm.EvaluateToInterface(smalltalkProgram1).(string), chant)
 
 	result2 = vm.EvaluateToInt64(smalltalkProgram2)
 	testutils.ASSERT_EQ(t, int(result2), 42)
+	testutils.ASSERT_FLOAT64_EQ(t, vm.EvaluateToInterface(smalltalkProgram2).(float64), 42)
 
 	result3 = vm.EvaluateToFloat64(smalltalkProgram3)
 	testutils.ASSERT_FLOAT64_EQ(t, result3, -0.56)
+	testutils.ASSERT_FLOAT64_EQ(t, vm.EvaluateToInterface(smalltalkProgram3).(float64), -0.56)
 
 	result4 = vm.EvaluateToBool(smalltalkProgram4)
 	testutils.ASSERT_FALSE(t, result4)
+	testutils.ASSERT_FALSE(t, vm.EvaluateToInterface(smalltalkProgram4).(bool))
+
 }
