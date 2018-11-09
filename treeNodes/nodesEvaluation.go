@@ -1,8 +1,8 @@
 package treeNodes
 
 import (
-	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 	"fmt"
+	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 	"strconv"
 )
 

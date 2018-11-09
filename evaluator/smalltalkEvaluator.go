@@ -30,6 +30,13 @@ func NewSmalltalkVM() *Evaluator {
 	return NewEvaluatorWithGlobalScope(globalScope)
 }
 
+func NewSmalltalkWorkspace() *Evaluator {
+	globalScope := new(treeNodes.Scope).Initialize()
+	evaluator := NewEvaluatorWithGlobalScope(globalScope)
+	evaluator.workspaceScope = new(treeNodes.Scope).Initialize()
+	return evaluator
+}
+
 func NewEvaluatorWithGlobalScope(global *treeNodes.Scope) *Evaluator {
 	evaluator := new(Evaluator)
 	evaluator.programCache = make(map[string]treeNodes.ProgramNodeInterface)
@@ -38,8 +45,9 @@ func NewEvaluatorWithGlobalScope(global *treeNodes.Scope) *Evaluator {
 }
 
 type Evaluator struct {
-	globalScope  *treeNodes.Scope
-	programCache map[string]treeNodes.ProgramNodeInterface
+	globalScope    *treeNodes.Scope
+	programCache   map[string]treeNodes.ProgramNodeInterface
+	workspaceScope *treeNodes.Scope
 }
 
 func (e *Evaluator) SetGlobalScope(scope *treeNodes.Scope) *Evaluator {
@@ -62,7 +70,12 @@ func (e *Evaluator) RunProgram(programString string) treeNodes.SmalltalkObjectIn
 
 func (e *Evaluator) EvaluateProgramNode(programNode treeNodes.ProgramNodeInterface) treeNodes.SmalltalkObjectInterface {
 	var result treeNodes.SmalltalkObjectInterface
-	localScope := new(treeNodes.Scope).Initialize()
+	var localScope *treeNodes.Scope
+	if e.workspaceScope != nil {
+		localScope = e.workspaceScope
+	} else {
+		localScope = new(treeNodes.Scope).Initialize()
+	}
 	localScope.OuterScope = e.globalScope
 
 	if e.globalScope.IsDirty() || programNode.GetLastValue() == nil {
