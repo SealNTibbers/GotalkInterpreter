@@ -71,6 +71,39 @@ func TestGlobalScopeEvaluation(t *testing.T) {
 	testutils.ASSERT_FLOAT64_EQ(t, resultObject.(*treeNodes.SmalltalkNumber).GetValue(), 25)
 }
 
+func TestGlobalScopeWithChangingEvaluation(t *testing.T) {
+	var inputString string
+	var resultObject treeNodes.SmalltalkObjectInterface
+
+	globalScope := new(treeNodes.Scope).Initialize()
+	globalScope.SetVar("x", treeNodes.NewSmalltalkNumber(25))
+
+	evaluator := NewEvaluatorWithGlobalScope(globalScope)
+
+	inputString = `x+5`
+	resultObject = evaluator.RunProgram(inputString)
+	testutils.ASSERT_TRUE(t, resultObject.TypeOf() == treeNodes.NUMBER_OBJ)
+	testutils.ASSERT_FLOAT64_EQ(t, resultObject.(*treeNodes.SmalltalkNumber).GetValue(), 30)
+
+	inputString = `x+10`
+	resultObject = evaluator.RunProgram(inputString)
+	testutils.ASSERT_TRUE(t, resultObject.TypeOf() == treeNodes.NUMBER_OBJ)
+	testutils.ASSERT_FLOAT64_EQ(t, resultObject.(*treeNodes.SmalltalkNumber).GetValue(), 35)
+
+	evaluator.SetVar("x", treeNodes.NewSmalltalkNumber(5))
+
+	inputString = `x+5`
+	resultObject = evaluator.RunProgram(inputString)
+	testutils.ASSERT_TRUE(t, resultObject.TypeOf() == treeNodes.NUMBER_OBJ)
+	testutils.ASSERT_FLOAT64_EQ(t, resultObject.(*treeNodes.SmalltalkNumber).GetValue(), 10)
+
+	// This test should be fail, because we have logic problem with isDirty
+	inputString = `x+10`
+	resultObject = evaluator.RunProgram(inputString)
+	testutils.ASSERT_TRUE(t, resultObject.TypeOf() == treeNodes.NUMBER_OBJ)
+	testutils.ASSERT_FLOAT64_EQ(t, resultObject.(*treeNodes.SmalltalkNumber).GetValue(), 15)
+}
+
 func TestLocalScopeEvaluation(t *testing.T) {
 	var inputString1, inputString2 string
 	var result1, result2 int64

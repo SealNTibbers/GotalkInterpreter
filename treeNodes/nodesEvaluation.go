@@ -9,15 +9,6 @@ import (
 type Scope struct {
 	variables  map[string]SmalltalkObjectInterface
 	OuterScope *Scope
-	isDirty    bool
-}
-
-func (s *Scope) IsDirty() bool {
-	return s.isDirty
-}
-
-func (s *Scope) Clean() {
-	s.isDirty = false
 }
 
 func (s *Scope) Initialize() *Scope {
@@ -26,7 +17,6 @@ func (s *Scope) Initialize() *Scope {
 }
 
 func (s *Scope) SetVar(name string, value SmalltalkObjectInterface) SmalltalkObjectInterface {
-	s.isDirty = true
 	s.variables[name] = value
 	return value
 }

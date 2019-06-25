@@ -3,6 +3,7 @@ package evaluator
 import (
 	"github.com/SealNTibbers/GotalkInterpreter/parser"
 	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
+	"sort"
 )
 
 //testing stuff
@@ -15,13 +16,13 @@ func NewTestEvaluator() *Evaluator {
 func TestEval(codeString string) treeNodes.SmalltalkObjectInterface {
 	evaluator := NewTestEvaluator()
 	programNode := parser.InitializeParserFor(codeString)
-	return evaluator.EvaluateProgramNode(programNode)
+	return evaluator.EvaluateProgram(&Program{needUpdate: true, programNode: programNode})
 }
 
 func TestEvalWithScope(codeString string, scope *treeNodes.Scope) treeNodes.SmalltalkObjectInterface {
 	evaluator := NewEvaluatorWithGlobalScope(scope)
 	programNode := parser.InitializeParserFor(codeString)
-	return evaluator.EvaluateProgramNode(programNode)
+	return evaluator.EvaluateProgram(&Program{needUpdate: true, programNode: programNode})
 }
 
 //real world API
@@ -39,14 +40,19 @@ func NewSmalltalkWorkspace() *Evaluator {
 
 func NewEvaluatorWithGlobalScope(global *treeNodes.Scope) *Evaluator {
 	evaluator := new(Evaluator)
-	evaluator.programCache = make(map[string]treeNodes.ProgramNodeInterface)
+	evaluator.programCache = make(map[string]*Program)
 	evaluator.globalScope = global
 	return evaluator
 }
 
+type Program struct {
+	needUpdate  bool
+	programNode treeNodes.ProgramNodeInterface
+}
+
 type Evaluator struct {
 	globalScope    *treeNodes.Scope
-	programCache   map[string]treeNodes.ProgramNodeInterface
+	programCache   map[string]*Program
 	workspaceScope *treeNodes.Scope
 }
 
@@ -60,15 +66,15 @@ func (e *Evaluator) GetGlobalScope() *treeNodes.Scope {
 }
 
 func (e *Evaluator) RunProgram(programString string) treeNodes.SmalltalkObjectInterface {
-	programNode, ok := e.programCache[programString]
+	_, ok := e.programCache[programString]
 	if !ok {
-		programNode = parser.InitializeParserFor(programString)
-		e.programCache[programString] = programNode
+		e.programCache[programString] = &Program{needUpdate: true, programNode:  parser.InitializeParserFor(programString)}
 	}
-	return e.EvaluateProgramNode(programNode)
+	evaluatorProgram := e.programCache[programString]
+	return e.EvaluateProgram(evaluatorProgram)
 }
 
-func (e *Evaluator) EvaluateProgramNode(programNode treeNodes.ProgramNodeInterface) treeNodes.SmalltalkObjectInterface {
+func (e *Evaluator) EvaluateProgram(program *Program) treeNodes.SmalltalkObjectInterface {
 	var result treeNodes.SmalltalkObjectInterface
 	var localScope *treeNodes.Scope
 	if e.workspaceScope != nil {
@@ -78,12 +84,12 @@ func (e *Evaluator) EvaluateProgramNode(programNode treeNodes.ProgramNodeInterfa
 	}
 	localScope.OuterScope = e.globalScope
 
-	if e.globalScope.IsDirty() || programNode.GetLastValue() == nil {
-		result = programNode.Eval(localScope)
-		programNode.SetLastValue(result)
-		e.globalScope.Clean()
+	if program.needUpdate || program.programNode.GetLastValue() == nil {
+		result = program.programNode.Eval(localScope)
+		program.programNode.SetLastValue(result)
+		program.needUpdate = false
 	} else {
-		result = programNode.GetLastValue()
+		result = program.programNode.GetLastValue()
 	}
 
 	return result
@@ -124,23 +130,37 @@ func (e *Evaluator) EvaluateToInterface(programString string) interface{} {
 	}
 }
 
+func (e *Evaluator) updateCacheIfNeededForVariable(variableName string){
+	for _, evaluatorProgram := range e.programCache {
+		program := evaluatorProgram.programNode
+		if sort.SearchStrings(program.GetVariables(), variableName) < len(program.GetVariables()) {
+			evaluatorProgram.needUpdate = true
+		}
+	}
+}
+
 //scope-related delegations
 func (e *Evaluator) SetVar(name string, value treeNodes.SmalltalkObjectInterface) treeNodes.SmalltalkObjectInterface {
+	e.updateCacheIfNeededForVariable(name)
 	return e.globalScope.SetVar(name, value)
 }
 
 func (e *Evaluator) SetStringVar(name string, value string) treeNodes.SmalltalkObjectInterface {
+	e.updateCacheIfNeededForVariable(name)
 	return e.globalScope.SetStringVar(name, value)
 }
 
 func (e *Evaluator) SetNumberVar(name string, value float64) treeNodes.SmalltalkObjectInterface {
+	e.updateCacheIfNeededForVariable(name)
 	return e.globalScope.SetNumberVar(name, value)
 }
 
 func (e *Evaluator) SetBoolVar(name string, value bool) treeNodes.SmalltalkObjectInterface {
+	e.updateCacheIfNeededForVariable(name)
 	return e.globalScope.SetBoolVar(name, value)
 }
 
 func (e *Evaluator) FindValueByName(name string) (treeNodes.SmalltalkObjectInterface, bool) {
+	e.updateCacheIfNeededForVariable(name)
 	return e.globalScope.FindValueByName(name)
 }
