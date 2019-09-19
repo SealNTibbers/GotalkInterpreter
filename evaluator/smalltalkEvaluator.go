@@ -130,7 +130,7 @@ func (e *Evaluator) EvaluateToInterface(programString string) interface{} {
 	}
 }
 
-func (e *Evaluator) updateCacheIfNeededForVariable(variableName string){
+func (e *Evaluator) updateCache(variableName string){
 	for _, evaluatorProgram := range e.programCache {
 		program := evaluatorProgram.programNode
 		if sort.SearchStrings(program.GetVariables(), variableName) < len(program.GetVariables()) {
@@ -141,26 +141,26 @@ func (e *Evaluator) updateCacheIfNeededForVariable(variableName string){
 
 //scope-related delegations
 func (e *Evaluator) SetVar(name string, value treeNodes.SmalltalkObjectInterface) treeNodes.SmalltalkObjectInterface {
-	e.updateCacheIfNeededForVariable(name)
+	e.updateCache(name)
 	return e.globalScope.SetVar(name, value)
 }
 
 func (e *Evaluator) SetStringVar(name string, value string) treeNodes.SmalltalkObjectInterface {
-	e.updateCacheIfNeededForVariable(name)
+	e.updateCache(name)
 	return e.globalScope.SetStringVar(name, value)
 }
 
 func (e *Evaluator) SetNumberVar(name string, value float64) treeNodes.SmalltalkObjectInterface {
-	e.updateCacheIfNeededForVariable(name)
+	e.updateCache(name)
 	return e.globalScope.SetNumberVar(name, value)
 }
 
 func (e *Evaluator) SetBoolVar(name string, value bool) treeNodes.SmalltalkObjectInterface {
-	e.updateCacheIfNeededForVariable(name)
+	e.updateCache(name)
 	return e.globalScope.SetBoolVar(name, value)
 }
 
 func (e *Evaluator) FindValueByName(name string) (treeNodes.SmalltalkObjectInterface, bool) {
-	e.updateCacheIfNeededForVariable(name)
+	e.updateCache(name)
 	return e.globalScope.FindValueByName(name)
 }
