@@ -1,8 +1,9 @@
 package treeNodes
 
 import (
-	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 	"sort"
+
+	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 )
 
 type ProgramNodeInterface interface {
@@ -114,7 +115,7 @@ func (m *SequenceNode) SetRightBar(rightBar int64) {
 }
 
 func (m *SequenceNode) GetVariables() []string {
-	result := [] string {}
+	result := []string{}
 	for _, statement := range m.statements {
 		result = append(result, statement.GetVariables()...)
 	}
@@ -273,8 +274,8 @@ func (v *VariableNode) GetName() string {
 }
 
 func (m *VariableNode) GetVariables() []string {
-	result := [] string {}
-	return append(result,m.Token.ValueOfToken())
+	result := []string{}
+	return append(result, m.Token.ValueOfToken())
 }
 
 type NodeWithRreceiverInterface interface {
@@ -411,7 +412,7 @@ func (m *BlockNode) GetVariables() []string {
 	sort.Strings(result)
 	for _, arg := range m.arguments {
 		localVariable := arg.GetVariables()[0]
-		index := sort.SearchStrings(result,localVariable)
+		index := sort.SearchStrings(result, localVariable)
 		result = append(result[:index], result[index+1:]...)
 	}
 	sort.Strings(result)

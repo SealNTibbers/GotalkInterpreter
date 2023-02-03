@@ -1,9 +1,10 @@
 package evaluator
 
 import (
+	"testing"
+
 	"github.com/SealNTibbers/GotalkInterpreter/testutils"
 	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
-	"testing"
 )
 
 func TestArrayEvaluation(t *testing.T) {

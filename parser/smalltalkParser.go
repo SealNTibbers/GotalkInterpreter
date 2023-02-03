@@ -1,11 +1,12 @@
 package parser
 
 import (
-	"github.com/SealNTibbers/GotalkInterpreter/talkio"
-	"github.com/SealNTibbers/GotalkInterpreter/scanner"
-	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
 	"strconv"
 	"strings"
+
+	"github.com/SealNTibbers/GotalkInterpreter/scanner"
+	"github.com/SealNTibbers/GotalkInterpreter/talkio"
+	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
 )
 
 type Parser struct {

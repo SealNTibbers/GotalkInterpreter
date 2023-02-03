@@ -1,10 +1,11 @@
 package parser
 
 import (
+	"testing"
+
 	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 	"github.com/SealNTibbers/GotalkInterpreter/testutils"
 	"github.com/SealNTibbers/GotalkInterpreter/treeNodes"
-	"testing"
 )
 
 func TestNumberParser(t *testing.T) {

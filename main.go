@@ -3,11 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
-	. "github.com/SealNTibbers/GotalkInterpreter/evaluator"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	. "github.com/SealNTibbers/GotalkInterpreter/evaluator"
 )
 
 // SetupCloseHandler creates a 'listener' on a new goroutine which will notify the

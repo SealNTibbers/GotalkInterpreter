@@ -1,9 +1,10 @@
 package talkio
 
 import (
-	"github.com/SealNTibbers/GotalkInterpreter/testutils"
 	"io"
 	"testing"
+
+	"github.com/SealNTibbers/GotalkInterpreter/testutils"
 )
 
 func TestReadRune(t *testing.T) {

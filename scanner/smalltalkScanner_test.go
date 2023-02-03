@@ -1,9 +1,10 @@
 package scanner
 
 import (
+	"testing"
+
 	"github.com/SealNTibbers/GotalkInterpreter/talkio"
 	"github.com/SealNTibbers/GotalkInterpreter/testutils"
-	"testing"
 )
 
 func TestScanNumber(t *testing.T) {

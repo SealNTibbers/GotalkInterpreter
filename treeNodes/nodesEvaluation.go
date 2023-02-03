@@ -2,8 +2,9 @@ package treeNodes
 
 import (
 	"fmt"
-	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 	"strconv"
+
+	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 )
 
 type Scope struct {
