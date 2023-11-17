@@ -3,14 +3,14 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"index.html": "00bb6fb65a46e7bee19d22398483628b",
-"/": "00bb6fb65a46e7bee19d22398483628b",
+const RESOURCES = {"index.html": "f5a60c40dfaeb5f2812dea834e7c94b0",
+"/": "f5a60c40dfaeb5f2812dea834e7c94b0",
 "version.json": "dbc8055b74f55006bb78bdfad40cc673",
 "icons/Icon-maskable-192.png": "c457ef57daa1d16f64b27b786ec2ea3c",
 "icons/Icon-maskable-512.png": "301a7604d45b3e739efc881eb04896ea",
 "icons/Icon-512.png": "96e752610906ba2a93c65f8abe1645f1",
 "icons/Icon-192.png": "ac9a721a12bbc803b44f645561ecb1e1",
-"manifest.json": "d4b85084e5c5c0d775d881f400a12d30",
+"manifest.json": "98a89c5833a50d24ed79ec7b23a3a53d",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": "89ed8f4e49bcdfc0b5bfc9b24591e347",
 "assets/packages/font_awesome_flutter/lib/fonts/fa-solid-900.ttf": "b72c617acdf2227c8b1413215f620711",

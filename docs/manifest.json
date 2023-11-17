@@ -1,11 +1,11 @@
 {
-    "name": "gotalk",
-    "short_name": "gotalk",
+    "name": "GotalkInterpreter",
+    "short_name": "GotalkInterpreter",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "GotalkInterpreter site.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
