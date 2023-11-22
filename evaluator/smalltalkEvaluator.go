@@ -14,13 +14,13 @@ func NewTestEvaluator() *Evaluator {
 
 func TestEval(codeString string) treeNodes.SmalltalkObjectInterface {
 	evaluator := NewTestEvaluator()
-	programNode := parser.InitializeParserFor(codeString)
+	programNode, _ := parser.InitializeParserFor(codeString)
 	return evaluator.EvaluateProgram(programNode)
 }
 
 func TestEvalWithScope(codeString string, scope *treeNodes.Scope) treeNodes.SmalltalkObjectInterface {
 	evaluator := NewEvaluatorWithGlobalScope(scope)
-	programNode := parser.InitializeParserFor(codeString)
+	programNode, _ := parser.InitializeParserFor(codeString)
 	return evaluator.EvaluateProgram(programNode)
 }
 
@@ -62,7 +62,11 @@ func (e *Evaluator) GetGlobalScope() *treeNodes.Scope {
 func (e *Evaluator) RunProgram(programString string) treeNodes.SmalltalkObjectInterface {
 	_, ok := e.programCache[programString]
 	if !ok {
-		e.programCache[programString] = parser.InitializeParserFor(programString)
+		initializedParser, err := parser.InitializeParserFor(programString)
+		if err != nil {
+			return treeNodes.NewSmalltalkString(err.Error())
+		}
+		e.programCache[programString] = initializedParser
 	}
 	evaluatorProgram := e.programCache[programString]
 	return e.EvaluateProgram(evaluatorProgram)
@@ -109,6 +113,9 @@ func (e *Evaluator) EvaluateToBool(programString string) bool {
 
 func (e *Evaluator) EvaluateToInterface(programString string) interface{} {
 	resultObject := e.RunProgram(programString)
+	if resultObject == nil {
+		return nil
+	}
 	switch resultObject.TypeOf() {
 	case treeNodes.NUMBER_OBJ:
 		return resultObject.(*treeNodes.SmalltalkNumber).GetValue()
@@ -117,7 +124,11 @@ func (e *Evaluator) EvaluateToInterface(programString string) interface{} {
 	case treeNodes.BOOLEAN_OBJ:
 		return resultObject.(*treeNodes.SmalltalkBoolean).GetValue()
 	case treeNodes.ARRAY_OBJ:
-		return resultObject.(*treeNodes.SmalltalkArray).GetValue()
+		array, err := resultObject.(*treeNodes.SmalltalkArray).GetValue()
+		if err != nil {
+			return nil
+		}
+		return array
 	default:
 		return nil
 	}

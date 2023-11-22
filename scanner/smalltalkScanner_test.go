@@ -12,11 +12,11 @@ func TestScanNumber(t *testing.T) {
 	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
-	token = vwScanner.Next()
+	token, _ = vwScanner.Next()
 	testutils.ASSERT_STREQ(t, NUMBER, token.TypeOfToken())
 	testutils.ASSERT_STREQ(t, token.(ValueTokenInterface).ValueOfToken(), "0.56")
 
-	eofToken := vwScanner.Next()
+	eofToken, _ := vwScanner.Next()
 	testutils.ASSERT_STREQ(t, eofToken.TypeOfToken(), "EOFToken")
 }
 
@@ -25,11 +25,11 @@ func TestScanIdentifier(t *testing.T) {
 	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
-	token = vwScanner.Next()
+	token, _ = vwScanner.Next()
 	testutils.ASSERT_STREQ(t, IDENT, token.TypeOfToken())
 	testutils.ASSERT_STREQ(t, token.(ValueTokenInterface).ValueOfToken(), "radio_altitude")
 
-	eofToken := vwScanner.Next()
+	eofToken, _ := vwScanner.Next()
 	testutils.ASSERT_STREQ(t, eofToken.TypeOfToken(), "EOFToken")
 }
 
@@ -38,11 +38,11 @@ func TestScanFloatNumberWithD(t *testing.T) {
 	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
-	token = vwScanner.Next()
+	token, _ = vwScanner.Next()
 	testutils.ASSERT_STREQ(t, NUMBER, token.TypeOfToken())
 	testutils.ASSERT_STREQ(t, token.(ValueTokenInterface).ValueOfToken(), "1.02")
 
-	eofToken := vwScanner.Next()
+	eofToken, _ := vwScanner.Next()
 	testutils.ASSERT_STREQ(t, "EOFToken", eofToken.TypeOfToken())
 }
 
@@ -51,11 +51,11 @@ func TestScanFloatNumberWithExp(t *testing.T) {
 	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
-	token = vwScanner.Next()
+	token, _ = vwScanner.Next()
 	testutils.ASSERT_STREQ(t, NUMBER, token.TypeOfToken())
 	testutils.ASSERT_STREQ(t, token.(ValueTokenInterface).ValueOfToken(), "10000")
 
-	eofToken := vwScanner.Next()
+	eofToken, _ := vwScanner.Next()
 	testutils.ASSERT_STREQ(t, "EOFToken", eofToken.TypeOfToken())
 }
 
@@ -64,11 +64,11 @@ func TestScanFloatNumberWithNegativeExp(t *testing.T) {
 	vwReader := talkio.NewReader(inputString)
 	vwScanner := New(*vwReader)
 	var token TokenInterface
-	token = vwScanner.Next()
+	token, _ = vwScanner.Next()
 	testutils.ASSERT_STREQ(t, NUMBER, token.TypeOfToken())
 	testutils.ASSERT_STREQ(t, token.(ValueTokenInterface).ValueOfToken(), "0.0001")
 
-	eofToken := vwScanner.Next()
+	eofToken, _ := vwScanner.Next()
 	testutils.ASSERT_STREQ(t, eofToken.TypeOfToken(), "EOFToken")
 }
 
@@ -92,11 +92,11 @@ func TestScanRealExpressions(t *testing.T) {
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	for _, eachTest := range tests {
-		token = vwScanner.Next()
+		token, _ = vwScanner.Next()
 		testutils.ASSERT_STREQ(t, token.TypeOfToken(), eachTest.expectedTokenType)
 		testutils.ASSERT_STREQ(t, token.(ValueTokenInterface).ValueOfToken(), eachTest.expectedValue)
 	}
-	eofToken := vwScanner.Next()
+	eofToken, _ := vwScanner.Next()
 	testutils.ASSERT_STREQ(t, eofToken.TypeOfToken(), "EOFToken")
 }
 
@@ -127,11 +127,11 @@ func TestScanIfStatementExpressionWithDifferentSubexpressions(t *testing.T) {
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	for _, eachTest := range tests {
-		token = vwScanner.Next()
+		token, _ = vwScanner.Next()
 		testutils.ASSERT_STREQ(t, token.TypeOfToken(), eachTest.expectedTokenType)
 		testutils.ASSERT_STREQ(t, token.(ValueTokenInterface).ValueOfToken(), eachTest.expectedValue)
 	}
-	eofToken := vwScanner.Next()
+	eofToken, _ := vwScanner.Next()
 	testutils.ASSERT_STREQ(t, eofToken.TypeOfToken(), "EOFToken")
 }
 
@@ -151,7 +151,7 @@ func TestScanAssignmentExpression(t *testing.T) {
 	foundAssignment := false
 	var index int
 	for i := 0; i < len(tests)+1; i++ {
-		token = vwScanner.Next()
+		token, _ = vwScanner.Next()
 		if foundAssignment {
 			index = i - 1
 		} else {
@@ -167,7 +167,7 @@ func TestScanAssignmentExpression(t *testing.T) {
 	}
 	testutils.ASSERT_TRUE(t, foundAssignment)
 
-	eofToken := vwScanner.Next()
+	eofToken, _ := vwScanner.Next()
 	testutils.ASSERT_STREQ(t, eofToken.TypeOfToken(), "EOFToken")
 }
 
@@ -186,11 +186,11 @@ func TestScanArray(t *testing.T) {
 	vwScanner := New(*vwReader)
 	var token TokenInterface
 	for _, eachTest := range tests {
-		token = vwScanner.Next()
+		token, _ = vwScanner.Next()
 		testutils.ASSERT_STREQ(t, token.TypeOfToken(), eachTest.expectedTokenType)
 		testutils.ASSERT_STREQ(t, token.(ValueTokenInterface).ValueOfToken(), eachTest.expectedValue)
 	}
-	eofToken := vwScanner.Next()
+	eofToken, _ := vwScanner.Next()
 	testutils.ASSERT_STREQ(t, eofToken.TypeOfToken(), "EOFToken")
 
 }
