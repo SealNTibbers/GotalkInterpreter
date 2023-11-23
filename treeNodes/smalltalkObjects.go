@@ -533,7 +533,7 @@ func (a *SmalltalkArray) GetValueAt(index int64) SmalltalkObjectInterface {
 	return a.array[index]
 }
 
-func (a *SmalltalkArray) GetValue() ([]interface{}, error) {
+func (a *SmalltalkArray) GetValue() []interface{} {
 	var interfaceSlice = make([]interface{}, len(a.array))
 	for i, each := range a.array {
 		switch each.TypeOf() {
@@ -544,16 +544,13 @@ func (a *SmalltalkArray) GetValue() ([]interface{}, error) {
 		case BOOLEAN_OBJ:
 			interfaceSlice[i] = each.(*SmalltalkBoolean).GetValue()
 		case ARRAY_OBJ:
-			innerArray, err := each.(*SmalltalkArray).GetValue()
-			if err != nil {
-				return nil, err
-			}
+			innerArray := each.(*SmalltalkArray).GetValue()
 			interfaceSlice[i] = innerArray
 		default:
-			return nil, errors.New(`we do not support this type "` + each.TypeOf() + `" in array`)
+			panic(`we do not support this type "` + each.TypeOf() + `" in array`)
 		}
 	}
-	return interfaceSlice, nil
+	return interfaceSlice
 }
 
 func (a *SmalltalkArray) Value() SmalltalkObjectInterface {

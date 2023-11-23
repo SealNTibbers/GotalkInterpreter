@@ -1,13 +1,11 @@
 package scanner
 
 import (
-	"errors"
+	"github.com/SealNTibbers/GotalkInterpreter/talkio"
 	"math"
 	"strconv"
 	"strings"
 	"unicode"
-
-	"github.com/SealNTibbers/GotalkInterpreter/talkio"
 )
 
 const (
@@ -148,20 +146,16 @@ func (s *Scanner) classify(character rune) string {
 	return s.getClassificationTable()[character]
 }
 
-func (s *Scanner) Next() (TokenInterface, error) {
+func (s *Scanner) Next() TokenInterface {
 	s.buffer.Reset()
 	s.tokenStart = s.stream.GetPosition()
 	if s.characterType == EOF {
 		s.token = &EOFToken{&Token{s.tokenStart + 1}}
 	} else {
-		sT, err := s.scanToken()
-		if err != nil {
-			return nil, err
-		}
-		s.token = sT
+		s.token = s.scanToken()
 	}
 	s.stripSeparators()
-	return s.token, nil
+	return s.token
 }
 
 func (s *Scanner) previousStepPosition() int64 {
@@ -172,9 +166,9 @@ func (s *Scanner) previousStepPosition() int64 {
 	}
 }
 
-func (s *Scanner) scanToken() (TokenInterface, error) {
+func (s *Scanner) scanToken() TokenInterface {
 	if s.characterType == ALPHABET {
-		return s.scanIdentifierOrKeyword(), nil
+		return s.scanIdentifierOrKeyword()
 	}
 
 	if s.characterType == DIGIT || (s.currentCharacter == '-' && s.classify(s.stream.PeekRune()) == DIGIT) {
@@ -182,22 +176,22 @@ func (s *Scanner) scanToken() (TokenInterface, error) {
 	}
 
 	if s.characterType == BIN {
-		return s.scanBinaryInSelector(), nil
+		return s.scanBinaryInSelector()
 	}
 
 	if s.characterType == SPEC {
-		return s.scanSpecialCharacter(), nil
+		return s.scanSpecialCharacter()
 	}
 
 	if s.currentCharacter == '\'' {
-		return s.scanStringSymbol(), nil
+		return s.scanStringSymbol()
 	}
 
 	if s.currentCharacter == '#' {
-		return s.scanLiteral(), nil
+		return s.scanLiteral()
 	}
 
-	return &Token{}, nil
+	return &Token{}
 }
 
 func (s *Scanner) scanIdentifierOrKeyword() TokenInterface {
@@ -262,13 +256,11 @@ func (s *Scanner) scanName() {
 	}
 }
 
-func (s *Scanner) scanNumber() (*NumberLiteralToken, error) {
+func (s *Scanner) scanNumber() *NumberLiteralToken {
 	start := s.stream.GetPosition()
 
-	number, err := s.scanNumberVisualWorks()
-	if err != nil {
-		return nil, err
-	}
+	number := s.scanNumberVisualWorks()
+
 	currentPosition := s.stream.GetPosition()
 
 	var stop int64
@@ -279,67 +271,58 @@ func (s *Scanner) scanNumber() (*NumberLiteralToken, error) {
 	}
 	s.stream.SetPosition(start - 1)
 
-	_, err = s.stream.ReadRunes(stop - start + 1)
+	_, err := s.stream.ReadRunes(stop - start + 1)
 	if err != nil {
-		return nil, errors.New("can't read an amount of runes to scan number")
+		panic("can't read an amount of runes to scan number")
 	}
 	s.stream.SetPosition(currentPosition)
 
-	return &NumberLiteralToken{NewLiteralToken(start, stop, string(number), NUMBER)}, nil
+	return &NumberLiteralToken{NewLiteralToken(start, stop, string(number), NUMBER)}
 }
 
-func (s *Scanner) scanNumberVisualWorks() (string, error) {
+func (s *Scanner) scanNumberVisualWorks() string {
 	s.stream.Skip(-1)
-	number, err := s.readSmalltalkSyntaxFromStream()
-	if err != nil {
-		return "", err
-	}
+	number := s.readSmalltalkSyntaxFromStream()
 	s.step()
-	return number, nil
+	return number
 }
 
-func (s *Scanner) readSmalltalkSyntaxFromStream() (string, error) {
+func (s *Scanner) readSmalltalkSyntaxFromStream() string {
 	if s.stream.AtEnd() || unicode.IsLetter(s.stream.PeekRune()) {
-		return "0", nil
+		return "0"
 	}
 	neg := s.stream.PeekRuneFor('-')
-	value, err := s.readIntegerWithRadix(10)
-	if err != nil {
-		return "", err
-	}
-	floatValue, err := s.readSmalltalkFloat(value)
-	if err != nil {
-		return "", err
-	}
+	value := s.readIntegerWithRadix(10)
+	floatValue := s.readSmalltalkFloat(value)
 	if neg {
 		floatValue *= -1
 	}
-	return strconv.FormatFloat(floatValue, 'f', -1, 64), nil
+	return strconv.FormatFloat(floatValue, 'f', -1, 64)
 }
 
-func (s *Scanner) readIntegerWithRadix(radix int) (int, error) {
+func (s *Scanner) readIntegerWithRadix(radix int) int {
 	value := 0
 	for {
 		if s.stream.AtEnd() {
-			return value, nil
+			return value
 		}
 
 		character, _, err := s.stream.ReadRune()
 		if err != nil {
-			return 0, errors.New("readIntegerWithRadix doesn't work as expected. FeelsBadMan")
+			panic("readIntegerWithRadix doesn't work as expected. FeelsBadMan")
 		}
 		digit := CharToNum(character)
 		if digit < 0 || digit >= radix {
 			s.stream.Skip(-1)
-			return value, nil
+			return value
 		} else {
 			value = value*radix + digit
 		}
 	}
-	return value, nil
+	return value
 }
 
-func (s *Scanner) readSmalltalkFloat(integerPart int) (float64, error) {
+func (s *Scanner) readSmalltalkFloat(integerPart int) float64 {
 	var num, den float64
 	var atEnd bool
 	var possibleCoercionClass rune
@@ -358,7 +341,7 @@ func (s *Scanner) readSmalltalkFloat(integerPart int) (float64, error) {
 				}
 				digit, _, err := s.stream.ReadRune()
 				if err != nil {
-					return 0.0, err
+					panic(err)
 				}
 				if !(unicode.IsDigit(digit)) {
 					break
@@ -392,10 +375,7 @@ func (s *Scanner) readSmalltalkFloat(integerPart int) (float64, error) {
 			}
 			digit, err := s.stream.PeekRuneError()
 			if err == nil && (digit != 0) && unicode.IsDigit(digit) {
-				exp, err = s.readIntegerWithRadix(10)
-				if err != nil {
-					return 0, err
-				}
+				exp = s.readIntegerWithRadix(10)
 				if neg {
 					exp = -1 * exp
 				}
@@ -407,9 +387,9 @@ func (s *Scanner) readSmalltalkFloat(integerPart int) (float64, error) {
 
 	value := float64(integerPart) + (num / den)
 	if exp == 0 {
-		return value, nil
+		return value
 	} else {
-		return value * math.Pow(10, float64(exp)), nil
+		return value * math.Pow(10, float64(exp))
 	}
 }
 
@@ -487,6 +467,7 @@ func (s *Scanner) scanLiteral() TokenInterface {
 	if s.currentCharacter == '(' || s.currentCharacter == '[' {
 		return s.scanLiteralArrayToken()
 	}
+	panic("Man you have a big problem!!!")
 	return nil
 }
 
