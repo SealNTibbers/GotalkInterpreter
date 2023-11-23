@@ -3,8 +3,8 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"index.html": "de7d196d5af1fa5ce5de255d64d730d8",
-"/": "de7d196d5af1fa5ce5de255d64d730d8",
+const RESOURCES = {"index.html": "9885bae9e96ec001f1718196e6547b5f",
+"/": "9885bae9e96ec001f1718196e6547b5f",
 "wasm_exec.js": "a9f6cc532f1f0a065d453b1e2906f72e",
 "version.json": "dbc8055b74f55006bb78bdfad40cc673",
 "icons/Icon-maskable-192.png": "c457ef57daa1d16f64b27b786ec2ea3c",
@@ -24,7 +24,7 @@ const RESOURCES = {"index.html": "de7d196d5af1fa5ce5de255d64d730d8",
 "assets/assets/wasm/gotalk.wasm": "61d2e4dee5ed84ab854adc9ef7ae1771",
 "assets/AssetManifest.bin": "48019061e4f7a976690de29e06e75c75",
 "assets/shaders/ink_sparkle.frag": "f8b80e740d33eb157090be4e995febdf",
-"main.dart.js": "03b94c6d406ce4c4d4874f03d0732909",
+"main.dart.js": "2e843d8b670642fc66f9cd81cc0c788b",
 "canvaskit/skwasm.wasm": "1a074e8452fe5e0d02b112e22cdcf455",
 "canvaskit/chromium/canvaskit.js": "96ae916cd2d1b7320fff853ee22aebb0",
 "canvaskit/chromium/canvaskit.wasm": "be0e3b33510f5b7b0cc76cc4d3e50048",
