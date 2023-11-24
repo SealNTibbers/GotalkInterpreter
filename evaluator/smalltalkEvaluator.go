@@ -113,6 +113,9 @@ func (e *Evaluator) EvaluateToBool(programString string) bool {
 
 func (e *Evaluator) EvaluateToInterface(programString string) interface{} {
 	resultObject := e.RunProgram(programString)
+	if resultObject == nil {
+		return nil
+	}
 	switch resultObject.TypeOf() {
 	case treeNodes.NUMBER_OBJ:
 		return resultObject.(*treeNodes.SmalltalkNumber).GetValue()
@@ -121,7 +124,11 @@ func (e *Evaluator) EvaluateToInterface(programString string) interface{} {
 	case treeNodes.BOOLEAN_OBJ:
 		return resultObject.(*treeNodes.SmalltalkBoolean).GetValue()
 	case treeNodes.ARRAY_OBJ:
-		return resultObject.(*treeNodes.SmalltalkArray).GetValue()
+		array, err := resultObject.(*treeNodes.SmalltalkArray).GetValue()
+		if err != nil {
+			return nil
+		}
+		return array
 	default:
 		return nil
 	}

@@ -1,6 +1,7 @@
 package treeNodes
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -42,15 +43,15 @@ func (s *Scope) FindValueByName(name string) (SmalltalkObjectInterface, bool) {
 	return value, ok
 }
 
-func (s *Scope) GetVarValue(name string) SmalltalkObjectInterface {
+func (s *Scope) GetVarValue(name string) (SmalltalkObjectInterface, error) {
 	value, ok := s.variables[name]
 	if ok {
-		return value
+		return value, nil
 	} else {
 		if s.OuterScope != nil {
 			return s.OuterScope.GetVarValue(name)
 		} else {
-			panic(`we do not have variable with "` + name + `" in this scope`)
+			return nil, errors.New(`we do not have variable with "` + name + `" in this scope`)
 		}
 	}
 }
@@ -62,7 +63,8 @@ func (message *MessageNode) Eval(scope *Scope) SmalltalkObjectInterface {
 		argument := each.Eval(scope)
 		if argument == nil {
 			each.Eval(scope)
-			panic("message argument should not be nil (void)")
+			return nil
+
 		}
 		argObjects = append(argObjects, argument)
 	}
@@ -94,8 +96,11 @@ func (assignment *AssignmentNode) Eval(scope *Scope) SmalltalkObjectInterface {
 
 func (variable *VariableNode) Eval(scope *Scope) SmalltalkObjectInterface {
 	// return value for variable
-	smalltalkValue := scope.GetVarValue(variable.GetName())
-	if smalltalkValue.TypeOf() == DEFERRED {
+	smalltalkValue, err := scope.GetVarValue(variable.GetName())
+	if err != nil {
+		return NewSmalltalkString(err.Error())
+	}
+	if smalltalkValue != nil && smalltalkValue.TypeOf() == DEFERRED {
 		return smalltalkValue.Value()
 	} else {
 		return smalltalkValue
