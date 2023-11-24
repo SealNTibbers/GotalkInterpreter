@@ -23,7 +23,10 @@ func InitializeParserFor(expressionString string) (treeNodes.ProgramNodeInterfac
 	parser := &Parser{scanner, nil, nil, false}
 
 	//initialize struct members
-	parser.step()
+	err := parser.step()
+	if err != nil {
+		return nil, err
+	}
 	node, err := parser.parseExpression()
 	if err != nil {
 		return nil, err

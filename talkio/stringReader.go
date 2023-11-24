@@ -179,7 +179,7 @@ func (r *StringReader) WriteTo(w io.Writer) (n int64, err error) {
 	s := r.s[r.i:]
 	m, err := io.WriteString(w, s)
 	if m > len(s) {
-		return 0, errors.New("strings.StringReader.WriteTo: invalid WriteString count")
+		panic("strings.StringReader.WriteTo: invalid WriteString count")
 	}
 	r.i += int64(m)
 	n = int64(m)

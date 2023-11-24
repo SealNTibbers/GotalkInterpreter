@@ -463,15 +463,16 @@ func (s *Scanner) scanBinaryInLiteral() *LiteralToken {
 func (s *Scanner) scanLiteralString() (*LiteralToken, error) {
 	s.step()
 
-	for s.characterType != EOF && !(s.currentCharacter == '\'' && s.step() != '\'') {
+	for !(s.currentCharacter == '\'' && s.step() != '\'') {
+		if s.characterType == EOF {
+			return nil, errors.New("UnmatchedQuoteInString")
+		}
 		s.buffer.WriteRune(s.currentCharacter)
 		s.step()
 	}
-	if s.characterType == EOF {
-		return nil, errors.New("UnmatchedQuoteInString")
-	} else {
-		return &LiteralToken{&ValueToken{&Token{s.tokenStart}, s.buffer.String(), STRING}, s.previousStepPosition()}, nil
-	}
+
+	return &LiteralToken{&ValueToken{&Token{s.tokenStart}, s.buffer.String(), STRING}, s.previousStepPosition()}, nil
+
 }
 
 func (s *Scanner) scanStringSymbol() (*LiteralToken, error) {

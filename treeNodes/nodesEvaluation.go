@@ -1,7 +1,7 @@
 package treeNodes
 
 import (
-	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/SealNTibbers/GotalkInterpreter/scanner"
@@ -42,36 +42,33 @@ func (s *Scope) FindValueByName(name string) (SmalltalkObjectInterface, bool) {
 	return value, ok
 }
 
-func (s *Scope) GetVarValue(name string) (SmalltalkObjectInterface, error) {
+func (s *Scope) GetVarValue(name string) SmalltalkObjectInterface {
 	value, ok := s.variables[name]
 	if ok {
-		return value, nil
+		return value
 	} else {
 		if s.OuterScope != nil {
 			return s.OuterScope.GetVarValue(name)
 		} else {
-			return nil, errors.New("variable not found")
+			panic(`we do not have variable with "` + name + `" in this scope`)
 		}
 	}
 }
 
 func (message *MessageNode) Eval(scope *Scope) SmalltalkObjectInterface {
 	receiver := message.receiver.Eval(scope)
-	if receiver == nil {
-		return NewSmalltalkString("Internal error")
-	}
 	var argObjects []SmalltalkObjectInterface
 	for _, each := range message.arguments {
 		argument := each.Eval(scope)
 		if argument == nil {
 			each.Eval(scope)
-			return nil
+			panic("message argument should not be nil (void)")
 		}
 		argObjects = append(argObjects, argument)
 	}
 	result, err := receiver.Perform(message.GetSelector(), argObjects)
 	if err != nil {
-		return NewSmalltalkString(err.Error())
+		fmt.Println(err)
 	}
 	return result
 }
@@ -97,11 +94,8 @@ func (assignment *AssignmentNode) Eval(scope *Scope) SmalltalkObjectInterface {
 
 func (variable *VariableNode) Eval(scope *Scope) SmalltalkObjectInterface {
 	// return value for variable
-	smalltalkValue, err := scope.GetVarValue(variable.GetName())
-	if err != nil {
-		return NewSmalltalkString(err.Error())
-	}
-	if smalltalkValue != nil && smalltalkValue.TypeOf() == DEFERRED {
+	smalltalkValue := scope.GetVarValue(variable.GetName())
+	if smalltalkValue.TypeOf() == DEFERRED {
 		return smalltalkValue.Value()
 	} else {
 		return smalltalkValue
