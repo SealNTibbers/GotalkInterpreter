@@ -117,6 +117,8 @@ func (e *Evaluator) EvaluateToInterface(programString string) interface{} {
 		return nil
 	}
 	switch resultObject.TypeOf() {
+	case treeNodes.UNDEFINED_OBJ:
+		return nil
 	case treeNodes.NUMBER_OBJ:
 		return resultObject.(*treeNodes.SmalltalkNumber).GetValue()
 	case treeNodes.STRING_OBJ:

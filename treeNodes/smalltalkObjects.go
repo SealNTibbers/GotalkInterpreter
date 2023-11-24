@@ -7,12 +7,13 @@ import (
 )
 
 const (
-	NUMBER_OBJ  = "NUMBER"
-	BOOLEAN_OBJ = "BOOLEAN"
-	STRING_OBJ  = "STRING"
-	BLOCK_OBJ   = "BLOCK"
-	DEFERRED    = "DEFERRED"
-	ARRAY_OBJ   = "ARRAY"
+	NUMBER_OBJ    = "NUMBER"
+	BOOLEAN_OBJ   = "BOOLEAN"
+	STRING_OBJ    = "STRING"
+	BLOCK_OBJ     = "BLOCK"
+	DEFERRED      = "DEFERRED"
+	ARRAY_OBJ     = "ARRAY"
+	UNDEFINED_OBJ = "UNDEFINED"
 )
 
 var numberMessages = map[string]interface{}{
@@ -287,13 +288,13 @@ func ifTrue(receiver *SmalltalkBoolean, arg SmalltalkObjectInterface) SmalltalkO
 	if receiver.GetValue() {
 		return arg.Value()
 	} else {
-		return nil
+		return NewSmalltalkUndefinedObject()
 	}
 }
 
 func ifFalse(receiver *SmalltalkBoolean, arg SmalltalkObjectInterface) SmalltalkObjectInterface {
 	if receiver.GetValue() {
-		return nil
+		return NewSmalltalkUndefinedObject()
 	} else {
 		return arg.Value()
 	}
@@ -418,6 +419,26 @@ type SmalltalkObject struct {
 
 func (obj *SmalltalkObject) Perform(name string, params []SmalltalkObjectInterface) (SmalltalkObjectInterface, error) {
 	return nil, nil
+}
+
+type SmalltalkUndefinedObject struct {
+	*SmalltalkObject
+}
+
+func NewSmalltalkUndefinedObject() *SmalltalkUndefinedObject {
+	return &SmalltalkUndefinedObject{&SmalltalkObject{}}
+}
+
+func (n *SmalltalkUndefinedObject) Value() SmalltalkObjectInterface {
+	return n
+}
+
+func (n *SmalltalkUndefinedObject) Perform(name string, params []SmalltalkObjectInterface) (SmalltalkObjectInterface, error) {
+	return nil, errors.New("doesNotUnderstand")
+}
+
+func (n *SmalltalkUndefinedObject) TypeOf() string {
+	return UNDEFINED_OBJ
 }
 
 type SmalltalkNumber struct {
