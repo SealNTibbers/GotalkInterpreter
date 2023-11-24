@@ -190,11 +190,11 @@ func (s *Scanner) scanToken() (TokenInterface, error) {
 	}
 
 	if s.currentCharacter == '\'' {
-		return s.scanStringSymbol(), nil
+		return s.scanStringSymbol()
 	}
 
 	if s.currentCharacter == '#' {
-		return s.scanLiteral(), nil
+		return s.scanLiteral()
 	}
 
 	return &Token{}, nil
@@ -460,34 +460,37 @@ func (s *Scanner) scanBinaryInLiteral() *LiteralToken {
 	return binarySelector
 }
 
-func (s *Scanner) scanLiteralString() *LiteralToken {
+func (s *Scanner) scanLiteralString() (*LiteralToken, error) {
 	s.step()
 
-	for !(s.currentCharacter == '\'' && s.step() != '\'') {
+	for s.characterType != EOF && !(s.currentCharacter == '\'' && s.step() != '\'') {
 		s.buffer.WriteRune(s.currentCharacter)
 		s.step()
 	}
-	return &LiteralToken{&ValueToken{&Token{s.tokenStart}, s.buffer.String(), STRING}, s.previousStepPosition()}
+	if s.characterType == EOF {
+		return nil, errors.New("UnmatchedQuoteInString")
+	} else {
+		return &LiteralToken{&ValueToken{&Token{s.tokenStart}, s.buffer.String(), STRING}, s.previousStepPosition()}, nil
+	}
 }
 
-func (s *Scanner) scanStringSymbol() *LiteralToken {
-	literalToken := s.scanLiteralString()
-	return literalToken
+func (s *Scanner) scanStringSymbol() (*LiteralToken, error) {
+	return s.scanLiteralString()
 }
 
-func (s *Scanner) scanLiteral() TokenInterface {
+func (s *Scanner) scanLiteral() (TokenInterface, error) {
 	s.step()
 	if s.characterType == BIN {
 		binary := s.scanBinaryInLiteral()
-		return binary
+		return binary, nil
 	}
 	if s.currentCharacter == '\'' {
 		return s.scanLiteralString()
 	}
 	if s.currentCharacter == '(' || s.currentCharacter == '[' {
-		return s.scanLiteralArrayToken()
+		return s.scanLiteralArrayToken(), nil
 	}
-	return nil
+	return nil, nil
 }
 
 func (s *Scanner) scanLiteralArrayToken() *LiteralArrayToken {

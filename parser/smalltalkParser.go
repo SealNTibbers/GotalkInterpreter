@@ -47,18 +47,27 @@ func (p *Parser) parseStatements(tagBool bool) (*treeNodes.SequenceNode, error) 
 	if p.currentToken.IsBinary() {
 		if p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == "|" {
 			leftBar = p.currentToken.GetStart()
-			p.step()
+			err = p.step()
+			if err != nil {
+				return nil, err
+			}
 			args, err = p.parseArgs()
 			if err != nil || !(p.currentToken.IsBinary() && p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == "|") {
 				return nil, errors.New("Parse error in parseStatements function.")
 			}
 			rightBar = p.currentToken.GetStart()
-			p.step()
+			err = p.step()
+			if err != nil {
+				return nil, err
+			}
 		} else {
 			if p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == "||" {
 				leftBar = p.currentToken.GetStart()
 				rightBar = leftBar + 1
-				p.step()
+				err = p.step()
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -87,7 +96,7 @@ func (p *Parser) parseArgs() ([]*treeNodes.VariableNode, error) {
 
 func (p *Parser) parseVariableNode() (*treeNodes.VariableNode, error) {
 	if p.currentToken.IsIdentifier() {
-		return p.parsePrimitiveIdentifier(), nil
+		return p.parsePrimitiveIdentifier()
 	} else {
 		return nil, errors.New("we expect variable name here btw")
 	}
@@ -116,7 +125,10 @@ func (p *Parser) parseStatementListInto(tagBool bool, sequenceNode *treeNodes.Se
 		}
 		if p.currentToken.IsSpecial() && p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == `.` {
 			periods = append(periods, p.currentToken.GetStart())
-			p.step()
+			err := p.step()
+			if err != nil {
+				return nil, err
+			}
 			//TODO: comments
 		} else {
 			returnFlag = true
@@ -124,7 +136,10 @@ func (p *Parser) parseStatementListInto(tagBool bool, sequenceNode *treeNodes.Se
 		if p.emptyStatements {
 			for p.currentToken.IsSpecial() && p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == `.` {
 				periods = append(periods, p.currentToken.GetStart())
-				p.step()
+				err := p.step()
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -142,7 +157,10 @@ func (p *Parser) parseAssignment() (treeNodes.ValueNodeInterface, error) {
 		return nil, err
 	}
 	position := p.currentToken.GetStart()
-	p.step()
+	err = p.step()
+	if err != nil {
+		return nil, err
+	}
 	assignmentNode := treeNodes.NewAssignmentNode()
 	assignmentNode.SetVariable(node)
 	parsedValue, err := p.parseAssignment()
@@ -169,7 +187,10 @@ func (p *Parser) parseCascadeMessage() (treeNodes.ValueNodeInterface, error) {
 	messages = append(messages, node.(*treeNodes.MessageNode))
 	for p.currentToken.IsSpecial() && p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == ";" {
 		semicolons = append(semicolons, p.currentToken.GetStart())
-		p.step()
+		err = p.step()
+		if err != nil {
+			return nil, err
+		}
 		var message *treeNodes.MessageNode
 		if p.currentToken.IsIdentifier() {
 			tmpMsg, err := p.parseKeywordMessageWith(receiver)
@@ -238,7 +259,10 @@ func (p *Parser) parseKeywordMessageWith(valueNode treeNodes.ValueNodeInterface)
 	isKeyword := false
 	for p.currentToken.IsKeyword() {
 		keywords = append(keywords, p.currentToken.(scanner.ValueTokenInterface))
-		p.step()
+		err := p.step()
+		if err != nil {
+			return nil, err
+		}
 		parsedBinary, err := p.parseBinaryMessage()
 		if err != nil {
 			return nil, err
@@ -278,7 +302,10 @@ func (p *Parser) isBinaryAfterPatch() bool {
 
 func (p *Parser) parseBinaryMessageWith(nodeInterface treeNodes.ValueNodeInterface) (*treeNodes.MessageNode, error) {
 	selector := p.currentToken.(*scanner.BinarySelectorToken)
-	p.step()
+	err := p.step()
+	if err != nil {
+		return nil, err
+	}
 	node := treeNodes.NewMessageNode()
 	selectorParts := []scanner.ValueTokenInterface{selector}
 	parsedUnary, err := p.parseUnaryMessage()
@@ -298,27 +325,33 @@ func (p *Parser) parseUnaryMessage() (treeNodes.ValueNodeInterface, error) {
 	}
 	for p.currentToken.IsIdentifier() {
 		//TODO: patchLiteralMessage
-		node = p.parseUnaryMessageWith(node)
+		node, err = p.parseUnaryMessageWith(node)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return node, nil
 }
 
-func (p *Parser) parseUnaryMessageWith(nodeInterface treeNodes.ValueNodeInterface) *treeNodes.MessageNode {
+func (p *Parser) parseUnaryMessageWith(nodeInterface treeNodes.ValueNodeInterface) (*treeNodes.MessageNode, error) {
 	selector := p.currentToken.(*scanner.IdentifierToken)
-	p.step()
+	err := p.step()
+	if err != nil {
+		return nil, err
+	}
 	node := treeNodes.NewMessageNode()
 	selectorParts := []scanner.ValueTokenInterface{selector} //literal array with one selector
 	arguments := []treeNodes.ValueNodeInterface{}
 	node.SetReceiverSelectorPartsArguments(nodeInterface, selectorParts, arguments)
-	return node
+	return node, nil
 }
 
 func (p *Parser) parsePrimitiveObject() (treeNodes.ValueNodeInterface, error) {
 	if p.currentToken.IsIdentifier() {
-		return p.parsePrimitiveIdentifier(), nil
+		return p.parsePrimitiveIdentifier()
 	}
 	if p.currentToken.IsLiteralToken() && !(p.currentToken.(scanner.LiteralTokenInterface).IsMultiKeyword()) {
-		return p.parsePrimitiveLiteral(), nil
+		return p.parsePrimitiveLiteral()
 	}
 	if p.currentToken.IsLiteralArrayToken() {
 		//TODO: ByteArray
@@ -338,7 +371,10 @@ func (p *Parser) parsePrimitiveObject() (treeNodes.ValueNodeInterface, error) {
 
 func (p *Parser) parseBlock() (*treeNodes.BlockNode, error) {
 	position := p.currentToken.GetStart()
-	p.step()
+	err := p.step()
+	if err != nil {
+		return nil, err
+	}
 	node := treeNodes.NewBlockNode()
 	p.parseBlockArgsInto(node)
 	node.SetLeft(position)
@@ -351,8 +387,10 @@ func (p *Parser) parseBlock() (*treeNodes.BlockNode, error) {
 		return nil, errors.New("Close bracket expected smth like ]")
 	}
 	node.SetRight(p.currentToken.GetStart())
-	p.step()
-
+	err = p.step()
+	if err != nil {
+		return nil, err
+	}
 	return node, nil
 }
 
@@ -362,7 +400,10 @@ func (p *Parser) parseBlockArgsInto(node *treeNodes.BlockNode) (*treeNodes.Block
 	verticalBar := false
 	for p.currentToken.IsSpecial() && p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == ":" {
 		colons = append(colons, p.currentToken.GetStart())
-		p.step()
+		err := p.step()
+		if err != nil {
+			return nil, err
+		}
 		verticalBar = true
 		parsedVariable, err := p.parseVariableNode()
 		if err != nil {
@@ -374,7 +415,10 @@ func (p *Parser) parseBlockArgsInto(node *treeNodes.BlockNode) (*treeNodes.Block
 		if p.currentToken.IsBinary() {
 			node.SetBar(p.currentToken.GetStart())
 			if p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == "|" {
-				p.step()
+				err := p.step()
+				if err != nil {
+					return nil, err
+				}
 			} else {
 				return nil, errors.New("bar inside block node is expected")
 			}
@@ -391,7 +435,10 @@ func (p *Parser) parseBlockArgsInto(node *treeNodes.BlockNode) (*treeNodes.Block
 
 func (p *Parser) parseParenthesizedExpression() (treeNodes.ValueNodeInterface, error) {
 	leftParen := p.currentToken.GetStart()
-	p.step()
+	err := p.step()
+	if err != nil {
+		return nil, err
+	}
 	node, err := p.parseAssignment()
 	if err != nil {
 		return nil, err
@@ -401,7 +448,10 @@ func (p *Parser) parseParenthesizedExpression() (treeNodes.ValueNodeInterface, e
 		interval.SetStart(p.currentToken.GetStart())
 		interval.SetStop(leftParen)
 		node.AddParenthesis(interval)
-		p.step()
+		err = p.step()
+		if err != nil {
+			return nil, err
+		}
 		return node, nil
 	} else {
 		return nil, errors.New("close parenthesis expected. something like ) ")
@@ -411,7 +461,10 @@ func (p *Parser) parseParenthesizedExpression() (treeNodes.ValueNodeInterface, e
 func (p *Parser) parseLiteralArray() (treeNodes.LiteralNodeInterface, error) {
 	var contents []treeNodes.LiteralNodeInterface
 	start := p.currentToken.GetStart()
-	p.step()
+	err := p.step()
+	if err != nil {
+		return nil, err
+	}
 	for !(p.atEnd() || (p.currentToken.IsSpecial() && p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == ")")) {
 		parsedLiteralArray, err := p.parseLiteralArrayObject()
 		if err != nil {
@@ -423,7 +476,10 @@ func (p *Parser) parseLiteralArray() (treeNodes.LiteralNodeInterface, error) {
 		return nil, errors.New("hmm parse error btw. we expect ) here")
 	}
 	stop := p.currentToken.(scanner.ValueTokenInterface).GetStop()
-	p.step()
+	err = p.step()
+	if err != nil {
+		return nil, err
+	}
 	node := treeNodes.CreateLiteralArrayNode(start, stop, contents)
 	return node, nil
 }
@@ -448,23 +504,29 @@ func (p *Parser) parseLiteralArrayObject() (treeNodes.LiteralNodeInterface, erro
 	}
 	//TODO: Optimized token
 	//TODO: patchLiteralArrayToken
-	return p.parsePrimitiveLiteral(), nil
+	return p.parsePrimitiveLiteral()
 }
 
-func (p *Parser) parsePrimitiveIdentifier() *treeNodes.VariableNode {
+func (p *Parser) parsePrimitiveIdentifier() (*treeNodes.VariableNode, error) {
 	token := p.currentToken.(scanner.ValueTokenInterface)
-	p.step()
+	err := p.step()
+	if err != nil {
+		return nil, err
+	}
 	node := &treeNodes.VariableNode{treeNodes.NewValueNode(), token}
-	return node
+	return node, nil
 }
 
-func (p *Parser) parsePrimitiveLiteral() treeNodes.LiteralNodeInterface {
+func (p *Parser) parsePrimitiveLiteral() (treeNodes.LiteralNodeInterface, error) {
 	token := p.currentToken.(scanner.LiteralTokenInterface)
-	p.step()
+	err := p.step()
+	if err != nil {
+		return nil, err
+	}
 	literalNode := treeNodes.NewLiteralNode()
 	node := literalNode.LiteralToken(token)
 
-	return node
+	return node, nil
 }
 
 func (p *Parser) step() error {
