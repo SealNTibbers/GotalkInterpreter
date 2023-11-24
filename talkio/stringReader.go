@@ -140,7 +140,7 @@ func (r *StringReader) PeekRuneFor(character rune) bool {
 	if character == nextRune {
 		return true
 	}
-	r.Skip(-1)
+	_ = r.Skip(-1)
 	return false
 }
 
@@ -148,18 +148,17 @@ func (r *StringReader) GetPosition() int64 {
 	return r.i
 }
 
-func (r *StringReader) SetPosition(position int64) (int64, error) {
+func (r *StringReader) SetPosition(position int64) error {
 	if position > int64(len(r.s)) || position < 0 {
-		return -1, errors.New("strings.StringReader.SetPosition: invalid position")
+		return errors.New("strings.StringReader.SetPosition: invalid position")
 	}
 	r.i = position
 	r.prevRune = (int)(r.i - 1)
-	return r.i, nil
+	return nil
 }
 
-func (r *StringReader) Skip(posOffset int64) (int64, error) {
-	position, err := r.SetPosition(r.i + posOffset)
-	return position, err
+func (r *StringReader) Skip(posOffset int64) error {
+	return r.SetPosition(r.i + posOffset)
 }
 
 func (r *StringReader) AtEnd() bool {

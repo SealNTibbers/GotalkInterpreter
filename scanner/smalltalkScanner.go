@@ -95,7 +95,7 @@ func (s *Scanner) initializeBuffer() {
 }
 
 func (s *Scanner) initializeClassificationTable() []string {
-	s.classificationTable = make([]string, 255, 255)
+	s.classificationTable = make([]string, 255)
 	var i rune
 	for i = 0; i < 255; i++ {
 		if unicode.IsLetter(i) {
@@ -240,8 +240,8 @@ func (s *Scanner) scanKeyword() TokenInterface {
 		}
 	}
 
-	s.buffer.SetPosition(outputPosition)
-	s.stream.SetPosition(inputPosition)
+	_ = s.buffer.SetPosition(outputPosition)
+	_ = s.stream.SetPosition(inputPosition)
 	s.step()
 	name := s.buffer.String()
 	if (strings.Count(name, ":")) == 1 {
@@ -277,19 +277,27 @@ func (s *Scanner) scanNumber() (*NumberLiteralToken, error) {
 	} else {
 		stop = currentPosition - 1
 	}
-	s.stream.SetPosition(start - 1)
-
+	err = s.stream.SetPosition(start - 1)
+	if err != nil {
+		return nil, err
+	}
 	_, err = s.stream.ReadRunes(stop - start + 1)
 	if err != nil {
 		return nil, errors.New("can't read an amount of runes to scan number")
 	}
-	s.stream.SetPosition(currentPosition)
+	err = s.stream.SetPosition(currentPosition)
+	if err != nil {
+		return nil, err
+	}
 
 	return &NumberLiteralToken{NewLiteralToken(start, stop, string(number), NUMBER)}, nil
 }
 
 func (s *Scanner) scanNumberVisualWorks() (string, error) {
-	s.stream.Skip(-1)
+	err := s.stream.Skip(-1)
+	if err != nil {
+		return "", err
+	}
 	number, err := s.readSmalltalkSyntaxFromStream()
 	if err != nil {
 		return "", err
@@ -330,7 +338,10 @@ func (s *Scanner) readIntegerWithRadix(radix int) (int, error) {
 		}
 		digit := CharToNum(character)
 		if digit < 0 || digit >= radix {
-			s.stream.Skip(-1)
+			err = s.stream.Skip(-1)
+			if err != nil {
+				return 0, err
+			}
 			return value, nil
 		} else {
 			value = value*radix + digit
@@ -370,11 +381,17 @@ func (s *Scanner) readSmalltalkFloat(integerPart int) (float64, error) {
 			}
 			den = math.Pow10(precision)
 			if !atEnd {
-				s.stream.Skip(-1)
+				err := s.stream.Skip(-1)
+				if err != nil {
+					return 0, err
+				}
 			}
 		} else {
 			//looks like it's just integer
-			s.stream.Skip(-1)
+			err := s.stream.Skip(-1)
+			if err != nil {
+				return 0, err
+			}
 		}
 	}
 
@@ -400,7 +417,10 @@ func (s *Scanner) readSmalltalkFloat(integerPart int) (float64, error) {
 					exp = -1 * exp
 				}
 			} else {
-				s.stream.SetPosition(endOfNumber)
+				err = s.stream.SetPosition(endOfNumber)
+				if err != nil {
+					return 0, err
+				}
 			}
 		}
 	}

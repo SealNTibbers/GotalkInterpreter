@@ -379,7 +379,10 @@ func (p *Parser) parseBlock() (*treeNodes.BlockNode, error) {
 		return nil, err
 	}
 	node := treeNodes.NewBlockNode()
-	p.parseBlockArgsInto(node)
+	_, err = p.parseBlockArgsInto(node)
+	if err != nil {
+		return nil, err
+	}
 	node.SetLeft(position)
 	parsedStatements, err := p.parseStatements(false)
 	if err != nil {
@@ -516,7 +519,7 @@ func (p *Parser) parsePrimitiveIdentifier() (*treeNodes.VariableNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	node := &treeNodes.VariableNode{treeNodes.NewValueNode(), token}
+	node := &treeNodes.VariableNode{ValueNode: treeNodes.NewValueNode(), Token: token}
 	return node, nil
 }
 

@@ -139,5 +139,4 @@ func (literalValue *LiteralValueNode) Eval(scope *Scope) SmalltalkObjectInterfac
 	default:
 		return nil
 	}
-	return nil
 }
