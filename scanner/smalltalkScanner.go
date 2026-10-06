@@ -2,7 +2,7 @@ package scanner
 
 import (
 	"errors"
-	"math"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -24,6 +24,7 @@ const (
 	NUMBER  = "number"
 	IDENT   = "identifier"
 	SYMBOL  = "symbol"
+	CHAR    = "character"
 	ARRAY   = "array"
 	KEYWORD = "keyword"
 )
@@ -52,6 +53,7 @@ type Scanner struct {
 	currentCharacter    rune
 	tokenStart          int64
 	token               TokenInterface
+	err                 error
 }
 
 func (s *Scanner) on(input talkio.StringReader) {
@@ -73,9 +75,21 @@ func (s *Scanner) step() rune {
 	return s.currentCharacter
 }
 
+// stripSeparators skips whitespace and "comments". An unterminated comment is reported by the next call to Next.
 func (s *Scanner) stripSeparators() {
 	for {
-		if s.characterType == SEPARATOR {
+		if s.characterType == SEPARATOR && s.characterType != EOF {
+			s.step()
+		} else if s.currentCharacter == '"' {
+			start := s.stream.GetPosition()
+			s.step()
+			for s.currentCharacter != '"' {
+				if s.characterType == EOF {
+					s.err = fmt.Errorf("unterminated comment starting at %d", start)
+					return
+				}
+				s.step()
+			}
 			s.step()
 		} else {
 			break
@@ -149,6 +163,9 @@ func (s *Scanner) classify(character rune) string {
 }
 
 func (s *Scanner) Next() (TokenInterface, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
 	s.buffer.Reset()
 	s.tokenStart = s.stream.GetPosition()
 	if s.characterType == EOF {
@@ -197,7 +214,22 @@ func (s *Scanner) scanToken() (TokenInterface, error) {
 		return s.scanLiteral()
 	}
 
-	return &Token{}, nil
+	if s.currentCharacter == '$' {
+		return s.scanCharacter()
+	}
+
+	return nil, fmt.Errorf("unexpected character %q at %d", s.currentCharacter, s.tokenStart)
+}
+
+// scanCharacter reads a character literal such as $a. Characters evaluate to one-character strings, as in Amber.
+func (s *Scanner) scanCharacter() (TokenInterface, error) {
+	if s.stream.AtEnd() {
+		return nil, fmt.Errorf("character expected after $ at %d", s.tokenStart)
+	}
+	s.step()
+	value := string(s.currentCharacter)
+	s.step()
+	return NewLiteralToken(s.tokenStart, s.previousStepPosition(), value, CHAR), nil
 }
 
 func (s *Scanner) scanIdentifierOrKeyword() TokenInterface {
@@ -306,131 +338,84 @@ func (s *Scanner) scanNumberVisualWorks() (string, error) {
 	return number, nil
 }
 
+// readSmalltalkSyntaxFromStream reads a number literal: an optional minus, digits, then either a radix part
+// (16r1F) or an optional fraction and exponent (1.5e-3). Decimal values are converted by strconv, so they are
+// correctly rounded.
 func (s *Scanner) readSmalltalkSyntaxFromStream() (string, error) {
-	if s.stream.AtEnd() || unicode.IsLetter(s.stream.PeekRune()) {
-		return "0", nil
+	start := s.stream.GetPosition()
+	sign := ""
+	if s.stream.PeekRuneFor('-') {
+		sign = "-"
 	}
-	neg := s.stream.PeekRuneFor('-')
-	value, err := s.readIntegerWithRadix(10)
-	if err != nil {
-		return "", err
+	digits := s.readDigits(10)
+	if digits == "" {
+		return "", fmt.Errorf("digit expected at %d", start)
 	}
-	floatValue, err := s.readSmalltalkFloat(value)
-	if err != nil {
-		return "", err
-	}
-	if neg {
-		floatValue *= -1
-	}
-	return strconv.FormatFloat(floatValue, 'f', -1, 64), nil
-}
-
-func (s *Scanner) readIntegerWithRadix(radix int) (int, error) {
-	value := 0
-	for {
-		if s.stream.AtEnd() {
-			return value, nil
+	if s.stream.PeekRune() == 'r' {
+		radix, err := strconv.Atoi(digits)
+		if err != nil || radix < 2 || radix > 36 {
+			return "", fmt.Errorf("invalid radix %s at %d", digits, start)
 		}
-
-		character, _, err := s.stream.ReadRune()
+		_, _, _ = s.stream.ReadRune()
+		radixDigits := s.readDigits(radix)
+		if radixDigits == "" {
+			return "", fmt.Errorf("digits expected after radix at %d", start)
+		}
+		value, err := strconv.ParseInt(sign+radixDigits, radix, 64)
 		if err != nil {
-			return 0, errors.New("readIntegerWithRadix doesn't work as expected. FeelsBadMan")
+			return "", fmt.Errorf("invalid number at %d: %v", start, err)
 		}
-		digit := CharToNum(character)
-		if digit < 0 || digit >= radix {
-			err = s.stream.Skip(-1)
-			if err != nil {
-				return 0, err
-			}
-			return value, nil
+		return strconv.FormatFloat(float64(value), 'f', -1, 64), nil
+	}
+	mantissa := sign + digits
+	if s.stream.PeekRune() == '.' {
+		position := s.stream.GetPosition()
+		_, _, _ = s.stream.ReadRune()
+		if fraction := s.readDigits(10); fraction != "" {
+			mantissa += "." + fraction
 		} else {
-			value = value*radix + digit
+			// "3." ends a statement
+			_ = s.stream.SetPosition(position)
 		}
 	}
-	return value, nil
+	if next := s.stream.PeekRune(); next == 'e' || next == 'd' || next == 'q' {
+		position := s.stream.GetPosition()
+		_, _, _ = s.stream.ReadRune()
+		expSign := ""
+		if s.stream.PeekRuneFor('-') {
+			expSign = "-"
+		}
+		if exponent := s.readDigits(10); exponent != "" {
+			mantissa += "e" + expSign + exponent
+		} else if next == 'e' || expSign != "" {
+			// not an exponent but a unary message, e.g. 2e
+			_ = s.stream.SetPosition(position)
+		}
+		// otherwise a bare VisualWorks precision suffix (1.02d), which is consumed
+	}
+	value, err := strconv.ParseFloat(mantissa, 64)
+	if err != nil {
+		return "", fmt.Errorf("invalid number %s at %d", mantissa, start)
+	}
+	return strconv.FormatFloat(value, 'f', -1, 64), nil
 }
 
-func (s *Scanner) readSmalltalkFloat(integerPart int) (float64, error) {
-	var num, den float64
-	var atEnd bool
-	var possibleCoercionClass rune
-	var exp int
-	precision := 0
-	num = 0.0
-	den = 1.0
-	exp = 0
-
-	if s.stream.PeekRuneFor('.') {
-		if !(s.stream.AtEnd()) && unicode.IsDigit(s.stream.PeekRune()) {
-			for {
-				atEnd = s.stream.AtEnd()
-				if atEnd {
-					break
-				}
-				digit, _, err := s.stream.ReadRune()
-				if err != nil {
-					return 0.0, err
-				}
-				if !(unicode.IsDigit(digit)) {
-					break
-				} else {
-					digitValue := CharToNum(digit)
-					num = num*10.0 + float64(digitValue)
-					precision += 1
-				}
-			}
-			den = math.Pow10(precision)
-			if !atEnd {
-				err := s.stream.Skip(-1)
-				if err != nil {
-					return 0, err
-				}
-			}
-		} else {
-			//looks like it's just integer
-			err := s.stream.Skip(-1)
-			if err != nil {
-				return 0, err
-			}
+// readDigits consumes the longest run of digits valid in radix (0-9, then A-Z).
+func (s *Scanner) readDigits(radix int) string {
+	var digits strings.Builder
+	for !s.stream.AtEnd() {
+		character := s.stream.PeekRune()
+		digit := CharToNum(character)
+		if digit < 0 && 'A' <= character && character <= 'Z' {
+			digit = int(character-'A') + 10
 		}
-	}
-
-	eChar, err := s.stream.PeekRuneError()
-	if err == nil && (eChar == 'e' || eChar == 'd') {
-		if eChar != 0 {
-			possibleCoercionClass, _, _ = s.stream.ReadRune()
+		if digit < 0 || digit >= radix {
+			break
 		}
-
-		if possibleCoercionClass != 0 {
-			endOfNumber := s.stream.GetPosition()
-			neg := false
-			if s.stream.PeekRuneFor('-') {
-				neg = true
-			}
-			digit, err := s.stream.PeekRuneError()
-			if err == nil && (digit != 0) && unicode.IsDigit(digit) {
-				exp, err = s.readIntegerWithRadix(10)
-				if err != nil {
-					return 0, err
-				}
-				if neg {
-					exp = -1 * exp
-				}
-			} else {
-				err = s.stream.SetPosition(endOfNumber)
-				if err != nil {
-					return 0, err
-				}
-			}
-		}
+		_, _, _ = s.stream.ReadRune()
+		digits.WriteRune(character)
 	}
-
-	value := float64(integerPart) + (num / den)
-	if exp == 0 {
-		return value, nil
-	} else {
-		return value * math.Pow(10, float64(exp)), nil
-	}
+	return digits.String()
 }
 
 func CharToNum(r rune) int {
@@ -511,7 +496,19 @@ func (s *Scanner) scanLiteral() (TokenInterface, error) {
 	if s.currentCharacter == '(' || s.currentCharacter == '[' {
 		return s.scanLiteralArrayToken(), nil
 	}
-	return nil, nil
+	if s.characterType == ALPHABET {
+		return s.scanSymbol(), nil
+	}
+	return nil, fmt.Errorf("literal expected after # at %d", s.tokenStart)
+}
+
+// scanSymbol reads #name, #name: or #name:with:. Symbols evaluate to strings, as in Amber.
+func (s *Scanner) scanSymbol() *LiteralToken {
+	for s.characterType == ALPHABET || s.characterType == DIGIT || s.currentCharacter == ':' {
+		s.buffer.WriteRune(s.currentCharacter)
+		s.step()
+	}
+	return NewLiteralToken(s.tokenStart, s.previousStepPosition(), s.buffer.String(), SYMBOL)
 }
 
 func (s *Scanner) scanLiteralArrayToken() *LiteralArrayToken {

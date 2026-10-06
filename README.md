@@ -28,81 +28,80 @@ GotalkInterpreter does not use any third party libraries. To get it run on your 
 go get github.com/SealNTibbers/GotalkInterpreter
 ```
 
+## Console
+
+`go run .` (or the built binary) is an interactive Smalltalk console. It works like a workspace: every input is
+evaluated and its result is printed, and the variables you assign stay defined. Input continues on the next line
+(`  >` prompt) while a bracket, string or comment is open or an expression is unfinished. Ctrl+C cancels the
+current input, and Ctrl+D or `:quit` exits. `:help` lists the commands (`:load file.st`, `:reset`, `:history`).
+
+```
+st> x := 3 + 4.
+7
+st> Transcript show: 'x squared = '; print: x * x; cr
+x squared = 49
+```
+
+`gotalk file.st ...` runs files in order and prints only what they write to `Transcript`. A file may be split into
+chunks ending with `!` (the classic file-in format, `!!` stands for `!`), may start with a `#!` line, and reports
+errors as `file:line: Error: ...`. `gotalk -e 'expr'` prints a result; `gotalk -i file.st` opens the console after
+running the file; `gotalk < file.st` reads the program from standard input.
+
+On a terminal, input is edited like in a shell (package `lineedit`, standard library only): Left/Right,
+Home/End or Ctrl+A/E, Alt+Left/Right or Alt+B/F by word, Backspace/Delete, Ctrl+K/U/W to delete to the end, to the
+start or a word. Up/Down (Ctrl+P/N) recall earlier inputs, and Ctrl+R searches them; an input typed on several lines
+is recalled as one line. `:history` lists them. The history is kept in `~/.gotalk_history` (last 1000 inputs);
+set `GOTALK_HISTORY` to another file, or to an empty value to keep it in memory. Line editing works on macOS,
+Linux and the BSDs; elsewhere the console reads plain lines.
+
 ## API and Examples
 
-Result of our Smalltalk code evaluation can be number (float64 or int. Internally it's always float64), bool or string.
+Result of our Smalltalk code evaluation can be number (float64 or int. Internally it's always float64), bool, string, array or nil.
+Characters (`$a`) and symbols (`#foo`) are strings, as in Amber.
 
-In our little Smalltalk we have supported limited amount of messages that is enough for our internal project but it's easily expandable.
+In our little Smalltalk we have supported limited amount of messages that is enough for our internal project but it's easily expandable
+(see the method tables in `treeNodes/smalltalkObjects.go`).
 
-Numbers can receive following messages:
-```go
-`value`           
-`=`               
-`~=`            
-`>`             
-`>=`             
-`<`              
-`<=`             
-`+`             
-`-`               
-`*`             
-`/`             
-`\\`             
-`//`             
-`rem:`           
-`max:`            
-`min:`            
-`abs`           
-`sqrt`            
-`sqr`             
-`sin`             
-`cos`             
-`tan`             
-`arcSin`          
-`arcCos`         
-`arcTan`          
-`rounded`         
-`truncated`       
-`fractionPart`     
-`floor`           
-`ceiling`          
-`negated`       
-`degreesToRadians`
-```
+All objects understand: `=` `~=` `==` `~~` `value` `yourself` `printString` `displayString` `isNil` `notNil`
+`ifNil:` `ifNotNil:` `ifNil:ifNotNil:` `ifNotNil:ifNil:` `isNumber` `isString` `isBoolean` `isArray` `isBlock`.
 
-Booleans can receive following messages:
-```go
-`value`
-`=`
-`~=`
-`ifTrue:`
-`ifFalse:`
-`ifTrue:ifFalse:`
-`ifFalse:ifTrue:`
-`and:`
-`&`
-`or:`
-`|`
-`xor:`
-`not`
-```
+Numbers: `+` `-` `*` `/` `//` `\\` `rem:` `quo:` `<` `<=` `>` `>=` `max:` `min:` `between:and:` `raisedTo:`
+`roundTo:` `truncateTo:` `log:` `arcTan:` `abs` `negated` `sqrt` `sqr` `squared` `sin` `cos` `tan` `arcSin` `arcCos` `arcTan`
+`ln` `log` `exp` `rounded` `truncated` `floor` `ceiling` `fractionPart` `integerPart` `asInteger` `asFloat` `asNumber`
+`sign` `isZero` `even` `odd` `degreesToRadians` `radiansToDegrees` `asString` `printString:` (radix)
+`printPaddedWith:to:` `printShowingDecimalPlaces:`.
+`\\` and `//` are floored as in Smalltalk (`-7 \\ 2 = 1`, `7.5 \\ 2 = 1.5`). Division by zero is a `ZeroDivide` error.
 
-Blocks can receive following messages:
-```go
-`value`
-`value:`
-```
+Booleans: `&` `|` `and:` `or:` `xor:` `not` `ifTrue:` `ifFalse:` `ifTrue:ifFalse:` `ifFalse:ifTrue:` `asString`.
 
-Arrays can receive following messages:
-```go
-`at:`
-`+`
-`-`
-`*`
-`/`
-`\\`
-`//`
-```
+Strings: `,` `<` `<=` `>` `>=` `size` `isEmpty` `notEmpty` `at:` `at:ifAbsent:` `first` `last` `copyFrom:to:`
+`includesSubstring:` `reversed` `asUppercase` `asLowercase` `asNumber` `asString` `asSymbol`.
+
+Blocks: `value` `value:` `value:value:` `value:value:value:` `value:value:value:value:` `valueWithArguments:` `numArgs`.
+
+Arrays: `at:` `at:ifAbsent:` `size` `isEmpty` `notEmpty` `first` `last` `includes:` `indexOf:` `,`
+and element-wise `+` `-` `*` `/` `\\` `//` with a number or an array of the same size.
+
+#### Errors
+
+Parse and runtime errors (unknown variable, message not understood, wrong argument type, index out of bounds,
+division by zero) are returned as Go errors by `Evaluate`, `EvaluateFloat64`, `EvaluateInt64`, `EvaluateString`
+and `EvaluateBool`. The older `RunProgram` and `EvaluateTo*` helpers never panic: they return nil or the zero value
+on errors.
+
+Results are cached per program until a variable the program reads changes through the evaluator (`SetVar`, ...).
+After changing the global scope directly, call `InvalidateCache()`.
+
+#### Concurrency
+
+An evaluator is safe for concurrent use, and evaluations run in parallel: cache hits take no lock, and other
+evaluations share a read lock. `SetVar` and friends take the write lock, so they wait for running evaluations and no
+program sees a parameter change halfway. `SetVars` changes several parameters as one step. Workspace evaluators
+(`NewSmalltalkWorkspace`) run one program at a time, because their programs write shared variables.
+Don't modify a value after setting it, and don't change the global scope directly while evaluations run.
+
+`./bench.sh` runs the parallel benchmarks (`evaluator/concurrency_bench_test.go`) for 1–16 goroutines and prints a
+table; `./bench.sh old.txt` adds a comparison with an earlier run (`bench-latest.txt` holds the raw output).
 
 #### Low-lewel API example
 ```go
@@ -112,7 +111,10 @@ globalScope := new(treeNodes.Scope).Initialize()
 globalScope.SetVar("angle", treeNodes.NewSmalltalkNumber(25))
 
 evaluator = evaluator.NewEvaluatorWithGlobalScope(globalScope)
-resultObject = evaluator.RunProgram(`angle\\10/10-0.9*10`)
+resultObject, err := evaluator.Evaluate(`angle\\10/10-0.9*10`)
+if err != nil {
+    // parse or runtime error
+}
 
 result = resultObject.(*treeNodes.SmalltalkNumber).GetValue()
 //so now we have result which is float64 and equals to -4

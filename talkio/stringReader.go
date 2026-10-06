@@ -112,10 +112,11 @@ func (r *StringReader) UnreadRune() error {
 	return nil
 }
 
+// PeekRune returns the next rune without consuming it, or 0 at the end of the input.
 func (r *StringReader) PeekRune() rune {
 	character, err := r.PeekRuneError()
 	if err != nil {
-		panic("error rune peeking")
+		return 0
 	}
 	return character
 }

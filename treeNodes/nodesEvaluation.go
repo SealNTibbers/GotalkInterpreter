@@ -1,7 +1,6 @@
 package treeNodes
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -11,10 +10,18 @@ import (
 type Scope struct {
 	variables  map[string]SmalltalkObjectInterface
 	OuterScope *Scope
+	global     bool
 }
 
 func (s *Scope) Initialize() *Scope {
 	s.variables = make(map[string]SmalltalkObjectInterface)
+	return s
+}
+
+// MarkAsGlobal makes the scope hold the externally set variables (parameters). Assignments inside programs
+// never write into a global scope; they shadow its variables in a local scope instead.
+func (s *Scope) MarkAsGlobal() *Scope {
+	s.global = true
 	return s
 }
 
@@ -44,104 +51,134 @@ func (s *Scope) FindValueByName(name string) (SmalltalkObjectInterface, bool) {
 }
 
 func (s *Scope) GetVarValue(name string) (SmalltalkObjectInterface, error) {
-	value, ok := s.variables[name]
-	if ok {
-		return value, nil
-	} else {
-		if s.OuterScope != nil {
-			return s.OuterScope.GetVarValue(name)
-		} else {
-			return nil, errors.New(`we do not have variable with "` + name + `" in this scope`)
+	for scope := s; scope != nil; scope = scope.OuterScope {
+		if value, ok := scope.variables[name]; ok {
+			return value, nil
 		}
 	}
+	return nil, fmt.Errorf("undefined variable: %s", name)
 }
 
-func (message *MessageNode) Eval(scope *Scope) SmalltalkObjectInterface {
-	receiver := message.receiver.Eval(scope)
-	var argObjects []SmalltalkObjectInterface
-	for _, each := range message.arguments {
-		argument := each.Eval(scope)
-		if argument == nil {
-			each.Eval(scope)
-			return nil
-
+// assign writes to the innermost local scope that defines name. If none does, the variable is created in the
+// outermost local scope (the program's, or the workspace's).
+func (s *Scope) assign(name string, value SmalltalkObjectInterface) {
+	outermost := s
+	for scope := s; scope != nil && !scope.global; scope = scope.OuterScope {
+		if _, ok := scope.variables[name]; ok {
+			scope.variables[name] = value
+			return
 		}
-		argObjects = append(argObjects, argument)
+		outermost = scope
 	}
-	result, err := receiver.Perform(message.GetSelector(), argObjects)
+	outermost.variables[name] = value
+}
+
+func newChildScope(outer *Scope) *Scope {
+	scope := new(Scope).Initialize()
+	scope.OuterScope = outer
+	return scope
+}
+
+func (message *MessageNode) Eval(scope *Scope) (SmalltalkObjectInterface, error) {
+	receiver, err := message.receiver.Eval(scope)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
-	return result
+	return message.sendTo(receiver, scope)
 }
 
-func (block *BlockNode) Eval(scope *Scope) SmalltalkObjectInterface {
-	return &SmalltalkBlock{&SmalltalkObject{}, block, scope}
+// sendTo evaluates the arguments and sends the message to an already evaluated receiver.
+func (message *MessageNode) sendTo(receiver SmalltalkObjectInterface, scope *Scope) (SmalltalkObjectInterface, error) {
+	argObjects := make([]SmalltalkObjectInterface, len(message.arguments))
+	for i, each := range message.arguments {
+		argument, err := each.Eval(scope)
+		if err != nil {
+			return nil, err
+		}
+		argObjects[i] = argument
+	}
+	return receiver.Perform(message.GetSelector(), argObjects)
 }
 
-func (sequence *SequenceNode) Eval(scope *Scope) SmalltalkObjectInterface {
+func (cascade *CascadeNode) Eval(scope *Scope) (SmalltalkObjectInterface, error) {
+	receiver, err := cascade.GetReceiver().Eval(scope)
+	if err != nil {
+		return nil, err
+	}
 	var result SmalltalkObjectInterface
-	for _, each := range sequence.statements {
-		result = each.Eval(scope)
+	for _, message := range cascade.messages {
+		result, err = message.sendTo(receiver, scope)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return result
+	return result, nil
 }
 
-func (assignment *AssignmentNode) Eval(scope *Scope) SmalltalkObjectInterface {
-	// create entry in our scope with assignment.variable and assignment.value
-	scope.SetVar(assignment.variable.GetName(), assignment.value.Eval(scope))
-	// return value for assignment variable
-	return assignment.variable.Eval(scope)
+func (block *BlockNode) Eval(scope *Scope) (SmalltalkObjectInterface, error) {
+	return &SmalltalkBlock{&SmalltalkObject{}, block, scope}, nil
 }
 
-func (variable *VariableNode) Eval(scope *Scope) SmalltalkObjectInterface {
-	// return value for variable
+func (sequence *SequenceNode) Eval(scope *Scope) (SmalltalkObjectInterface, error) {
+	nilObject := NewSmalltalkUndefinedObject()
+	for _, temporary := range sequence.temporaries {
+		scope.SetVar(temporary.GetName(), nilObject)
+	}
+	var result SmalltalkObjectInterface = nilObject
+	for _, each := range sequence.statements {
+		value, err := each.Eval(scope)
+		if err != nil {
+			return nil, err
+		}
+		result = value
+	}
+	return result, nil
+}
+
+func (assignment *AssignmentNode) Eval(scope *Scope) (SmalltalkObjectInterface, error) {
+	value, err := assignment.value.Eval(scope)
+	if err != nil {
+		return nil, err
+	}
+	scope.assign(assignment.variable.GetName(), value)
+	return value, nil
+}
+
+func (variable *VariableNode) Eval(scope *Scope) (SmalltalkObjectInterface, error) {
 	smalltalkValue, err := scope.GetVarValue(variable.GetName())
 	if err != nil {
-		return NewSmalltalkString(err.Error())
+		return nil, err
 	}
-	if smalltalkValue != nil && smalltalkValue.TypeOf() == DEFERRED {
-		return smalltalkValue.Value()
-	} else {
-		return smalltalkValue
-	}
+	return resolve(smalltalkValue)
 }
 
-func (array *LiteralArrayNode) Eval(scope *Scope) SmalltalkObjectInterface {
+func (array *LiteralArrayNode) Eval(scope *Scope) (SmalltalkObjectInterface, error) {
 	arr := new(SmalltalkArray)
 	for _, each := range array.contents {
-		value := each.Eval(scope)
+		value, err := each.Eval(scope)
+		if err != nil {
+			return nil, err
+		}
 		arr.array = append(arr.array, value)
 	}
-	return arr
+	return arr, nil
 }
 
-func (literalValue *LiteralValueNode) Eval(scope *Scope) SmalltalkObjectInterface {
+func (literalValue *LiteralValueNode) Eval(scope *Scope) (SmalltalkObjectInterface, error) {
 	switch typeOfLiteral := literalValue.GetTypeOfToken(); typeOfLiteral {
 	case scanner.NUMBER:
-		{
-			number, err := strconv.ParseFloat(literalValue.GetValue(), 64)
-			if err == nil {
-				object := new(SmalltalkNumber)
-				object.SetValue(number)
-				return object
-			} else {
-				return nil
-			}
+		number, err := strconv.ParseFloat(literalValue.GetValue(), 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid number literal: %s", literalValue.GetValue())
 		}
-	case scanner.STRING:
-		{
-			object := new(SmalltalkString)
-			object.SetValue(literalValue.GetValue())
-			return object
-		}
+		return NewSmalltalkNumber(number), nil
+	case scanner.STRING, scanner.SYMBOL, scanner.CHAR:
+		return NewSmalltalkString(literalValue.GetValue()), nil
 	case scanner.BOOLEAN:
-		{
-			object := new(SmalltalkBoolean)
-			object.SetValue(literalValue.GetValue() == "true")
-			return object
-		}
+		return NewSmalltalkBoolean(literalValue.GetValue() == "true"), nil
+	case scanner.NIL:
+		return NewSmalltalkUndefinedObject(), nil
 	default:
-		return nil
+		return nil, fmt.Errorf("unsupported literal: %s", literalValue.GetValue())
 	}
 }

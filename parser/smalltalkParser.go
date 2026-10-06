@@ -2,7 +2,7 @@ package parser
 
 import (
 	"errors"
-	"strconv"
+	"fmt"
 	"strings"
 
 	"github.com/SealNTibbers/GotalkInterpreter/scanner"
@@ -30,6 +30,9 @@ func InitializeParserFor(expressionString string) (treeNodes.ProgramNodeInterfac
 	node, err := parser.parseExpression()
 	if err != nil {
 		return nil, err
+	}
+	if !parser.atEnd() {
+		return nil, fmt.Errorf("unexpected %s at %d", describeToken(parser.currentToken), parser.currentToken.GetStart())
 	}
 	if len(node.GetStatements()) == 1 && len(node.GetTemporaries()) == 0 {
 		return node.GetStatements()[0], nil
@@ -114,7 +117,7 @@ func (p *Parser) parseStatementListInto(tagBool bool, sequenceNode *treeNodes.Se
 	}
 	for !(p.atEnd() || (p.currentToken.IsSpecial() && IncludesInString("])}", p.currentToken.(scanner.ValueTokenInterface).ValueOfToken()))) {
 		if returnFlag {
-			return nil, errors.New("End of statement list encountered")
+			return nil, fmt.Errorf("period or end of statement expected before %s at %d", describeToken(p.currentToken), p.currentToken.GetStart())
 		}
 		if p.currentToken.IsSpecial() && p.currentToken.(scanner.ValueTokenInterface).ValueOfToken() == `^` {
 			//TODO: smalltalk return statement ^
@@ -152,7 +155,14 @@ func (p *Parser) parseStatementListInto(tagBool bool, sequenceNode *treeNodes.Se
 }
 
 func (p *Parser) parseAssignment() (treeNodes.ValueNodeInterface, error) {
-	if !(p.currentToken.IsIdentifier() && p.nextToken().IsAssignment()) {
+	if !p.currentToken.IsIdentifier() {
+		return p.parseCascadeMessage()
+	}
+	next, err := p.nextToken()
+	if err != nil {
+		return nil, err
+	}
+	if !next.IsAssignment() {
 		return p.parseCascadeMessage()
 	}
 	node, err := p.parseVariableNode()
@@ -194,13 +204,19 @@ func (p *Parser) parseCascadeMessage() (treeNodes.ValueNodeInterface, error) {
 		if err != nil {
 			return nil, err
 		}
+		// each part after ; is one message to the receiver: unary (; cr), keyword (; at: 1) or binary (; + 1)
 		var message *treeNodes.MessageNode
 		if p.currentToken.IsIdentifier() {
-			tmpMsg, err := p.parseKeywordMessageWith(receiver)
+			message, err = p.parseUnaryMessageWith(receiver)
 			if err != nil {
 				return nil, err
 			}
-			message = tmpMsg.(*treeNodes.MessageNode)
+		} else if p.currentToken.IsKeyword() {
+			keywordMessage, err := p.parseKeywordMessageWith(receiver)
+			if err != nil {
+				return nil, err
+			}
+			message = keywordMessage.(*treeNodes.MessageNode)
 		} else {
 			if p.currentToken.IsLiteralToken() {
 				p.patchNegativeLiteral()
@@ -230,21 +246,15 @@ func (p *Parser) patchNegativeLiteral() {
 	if !(p.currentToken.TypeOfToken() == scanner.NUMBER) {
 		return
 	}
+	// `x -1` was scanned as x followed by the literal -1: split it into the binary - and 1
+	// (keeping the digits exactly; this used to round to two decimals).
 	strVal := p.currentToken.(*scanner.NumberLiteralToken).ValueOfToken()
-	value, err := strconv.ParseFloat(strVal, 64)
-	if err != nil {
-		return
-	}
-
-	if value >= 0 {
+	if !strings.HasPrefix(strVal, "-") {
 		return
 	}
 	p.peekToken = p.currentToken
 	p.currentToken = scanner.NewBinarySelectorToken(p.peekToken.GetStart(), `-`)
-	p.peekToken.(*scanner.NumberLiteralToken).SetValue(strconv.FormatFloat(value*-1, 'f', 2, 64))
-	if p.peekToken.TypeOfToken() == scanner.NUMBER {
-		//TODO: working with source code for token
-	}
+	p.peekToken.(*scanner.NumberLiteralToken).SetValue(strVal[1:])
 	p.peekToken.SetStart(p.peekToken.GetStart() + 1)
 }
 
@@ -353,7 +363,7 @@ func (p *Parser) parsePrimitiveObject() (treeNodes.ValueNodeInterface, error) {
 	if p.currentToken.IsIdentifier() {
 		return p.parsePrimitiveIdentifier()
 	}
-	if p.currentToken.IsLiteralToken() && !(p.currentToken.(scanner.LiteralTokenInterface).IsMultiKeyword()) {
+	if literal, ok := p.currentToken.(scanner.LiteralTokenInterface); ok && p.currentToken.IsLiteralToken() && !literal.IsMultiKeyword() {
 		return p.parsePrimitiveLiteral()
 	}
 	if p.currentToken.IsLiteralArrayToken() {
@@ -368,8 +378,7 @@ func (p *Parser) parsePrimitiveObject() (treeNodes.ValueNodeInterface, error) {
 			return p.parseParenthesizedExpression()
 		}
 	}
-	//in case of emergency LUL
-	return nil, errors.New("what is our token?")
+	return nil, fmt.Errorf("expression expected but %s found at %d", describeToken(p.currentToken), p.currentToken.GetStart())
 }
 
 func (p *Parser) parseBlock() (*treeNodes.BlockNode, error) {
@@ -508,9 +517,26 @@ func (p *Parser) parseLiteralArrayObject() (treeNodes.LiteralNodeInterface, erro
 			return p.parseLiteralArray()
 		}
 	}
-	//TODO: Optimized token
-	//TODO: patchLiteralArrayToken
-	return p.parsePrimitiveLiteral()
+	// inside a literal array, bare names, keywords and binary selectors are symbols: #(foo at:put: +)
+	if p.currentToken.IsIdentifier() || p.currentToken.IsKeyword() || p.currentToken.IsBinary() {
+		return p.parseSymbolInLiteralArray(p.currentToken.(scanner.ValueTokenInterface).ValueOfToken())
+	}
+	if literal, ok := p.currentToken.(scanner.LiteralTokenInterface); ok && literal.IsMultiKeyword() {
+		return p.parseSymbolInLiteralArray(strings.TrimPrefix(literal.ValueOfToken(), "#"))
+	}
+	if _, ok := p.currentToken.(scanner.LiteralTokenInterface); ok && p.currentToken.IsLiteralToken() {
+		return p.parsePrimitiveLiteral()
+	}
+	return nil, fmt.Errorf("literal expected in literal array but %s found at %d", describeToken(p.currentToken), p.currentToken.GetStart())
+}
+
+func (p *Parser) parseSymbolInLiteralArray(name string) (treeNodes.LiteralNodeInterface, error) {
+	token := scanner.NewLiteralToken(p.currentToken.GetStart(), p.currentToken.GetStop(), name, scanner.SYMBOL)
+	err := p.step()
+	if err != nil {
+		return nil, err
+	}
+	return treeNodes.NewLiteralNode().LiteralToken(token), nil
 }
 
 func (p *Parser) parsePrimitiveIdentifier() (*treeNodes.VariableNode, error) {
@@ -549,12 +575,29 @@ func (p *Parser) step() error {
 	return nil
 }
 
-func (p *Parser) nextToken() scanner.TokenInterface {
+func (p *Parser) nextToken() (scanner.TokenInterface, error) {
 	if p.peekToken == nil {
-		peekToken, _ := p.scanner.Next()
+		peekToken, err := p.scanner.Next()
+		if err != nil {
+			return nil, err
+		}
 		p.peekToken = peekToken
 	}
-	return p.peekToken
+	return p.peekToken, nil
+}
+
+// describeToken names a token for error messages.
+func describeToken(token scanner.TokenInterface) string {
+	if token.TypeOfToken() == "EOFToken" {
+		return "end of input"
+	}
+	if valueToken, ok := token.(scanner.ValueTokenInterface); ok {
+		return "'" + valueToken.ValueOfToken() + "'"
+	}
+	if token.IsAssignment() {
+		return "':='"
+	}
+	return "token"
 }
 
 func (p *Parser) atEnd() bool {

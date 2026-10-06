@@ -1,7 +1,7 @@
 package treeNodes
 
 import (
-	"sort"
+	"errors"
 
 	"github.com/SealNTibbers/GotalkInterpreter/scanner"
 )
@@ -15,27 +15,17 @@ type ProgramNodeInterface interface {
 	IsLiteralNode() bool
 	IsLiteralArray() bool
 	IsAssignment() bool
-	Eval(scope *Scope) SmalltalkObjectInterface
-	GetLastValue() SmalltalkObjectInterface
-	SetLastValue(SmalltalkObjectInterface)
+	Eval(scope *Scope) (SmalltalkObjectInterface, error)
+	// GetVariables returns the sorted names the node reads from outside itself (its free variables).
 	GetVariables() []string
 }
 
 type Node struct {
-	parent    ProgramNodeInterface
-	lastValue SmalltalkObjectInterface
+	parent ProgramNodeInterface
 }
 
-func (n *Node) SetLastValue(value SmalltalkObjectInterface) {
-	n.lastValue = value
-}
-
-func (n *Node) GetLastValue() SmalltalkObjectInterface {
-	return n.lastValue
-}
-
-func (n *Node) Eval(scope *Scope) SmalltalkObjectInterface {
-	return nil
+func (n *Node) Eval(scope *Scope) (SmalltalkObjectInterface, error) {
+	return nil, errors.New("this node cannot be evaluated")
 }
 
 func (n *Node) IsMessage() bool {
@@ -115,12 +105,7 @@ func (m *SequenceNode) SetRightBar(rightBar int64) {
 }
 
 func (m *SequenceNode) GetVariables() []string {
-	result := []string{}
-	for _, statement := range m.statements {
-		result = append(result, statement.GetVariables()...)
-	}
-	sort.Strings(result)
-	return result
+	return FreeVariables(m)
 }
 
 type ValueNodeInterface interface {
@@ -172,7 +157,7 @@ func (a *AssignmentNode) IsAssignment() bool {
 }
 
 func (a *AssignmentNode) GetVariables() []string {
-	return nil
+	return FreeVariables(a)
 }
 
 type LiteralNodeInterface interface {
@@ -244,7 +229,7 @@ func (l *LiteralArrayNode) GetValue() string {
 }
 
 func (m *LiteralArrayNode) GetVariables() []string {
-	return nil
+	return FreeVariables(m)
 }
 
 type LiteralValueNode struct {
@@ -261,7 +246,7 @@ func (literalValue *LiteralValueNode) GetValue() string {
 }
 
 func (l *LiteralValueNode) GetVariables() []string {
-	return nil
+	return FreeVariables(l)
 }
 
 type VariableNode struct {
@@ -274,8 +259,7 @@ func (v *VariableNode) GetName() string {
 }
 
 func (m *VariableNode) GetVariables() []string {
-	result := []string{}
-	return append(result, m.Token.ValueOfToken())
+	return FreeVariables(m)
 }
 
 type NodeWithRreceiverInterface interface {
@@ -333,12 +317,7 @@ func (m *MessageNode) SetArguments(arguments []ValueNodeInterface) {
 }
 
 func (m *MessageNode) GetVariables() []string {
-	variables := m.receiver.GetVariables()
-	for _, arg := range m.arguments {
-		variables = append(variables, arg.GetVariables()...)
-	}
-	sort.Strings(variables)
-	return variables
+	return FreeVariables(m)
 }
 
 type CascadeNode struct {
@@ -363,7 +342,7 @@ func (m *CascadeNode) SetMessages(messages []*MessageNode) {
 }
 
 func (m *CascadeNode) GetVariables() []string {
-	return nil
+	return FreeVariables(m)
 }
 
 type BlockNode struct {
@@ -408,15 +387,7 @@ func (m *BlockNode) SetRight(right int64) {
 }
 
 func (m *BlockNode) GetVariables() []string {
-	result := m.body.GetVariables()
-	sort.Strings(result)
-	for _, arg := range m.arguments {
-		localVariable := arg.GetVariables()[0]
-		index := sort.SearchStrings(result, localVariable)
-		result = append(result[:index], result[index+1:]...)
-	}
-	sort.Strings(result)
-	return result
+	return FreeVariables(m)
 }
 
 type Interval struct {

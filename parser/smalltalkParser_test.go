@@ -80,7 +80,7 @@ func TestNumberWithMinusParser(t *testing.T) {
 	testutils.ASSERT_TRUE(t, len(messageNode.(*treeNodes.MessageNode).GetSelectorParts()) == 1)
 	testutils.ASSERT_STREQ(t, messageNode.(*treeNodes.MessageNode).GetSelectorParts()[0].(*scanner.BinarySelectorToken).ValueOfToken(), "-")
 	testutils.ASSERT_TRUE(t, len(messageNode.(*treeNodes.MessageNode).GetArguments()) == 1)
-	testutils.ASSERT_STREQ(t, messageNode.(*treeNodes.MessageNode).GetArguments()[0].(*treeNodes.LiteralValueNode).GetValue(), "4.00")
+	testutils.ASSERT_STREQ(t, messageNode.(*treeNodes.MessageNode).GetArguments()[0].(*treeNodes.LiteralValueNode).GetValue(), "4")
 }
 
 func TestFewBinaryMessageParser(t *testing.T) {
